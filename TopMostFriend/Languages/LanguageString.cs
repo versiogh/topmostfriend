@@ -1,19 +1,16 @@
-﻿using System.Xml.Serialization;
+using System.Xml.Serialization;
 
-namespace TopMostFriend.Languages {
-    public class LanguageString {
-        [XmlAttribute(@"name")]
-        public string Name { get; set; }
+namespace TopMostFriend.Languages;
 
-        [XmlText]
-        public string Value { get; set; }
+public sealed class LanguageString
+{
+    [XmlAttribute("name")]
+    public string Name { get; set; } = string.Empty;
 
-        public string Format(params object[] args) {
-            return string.Format(Value, args);
-        }
+    [XmlText]
+    public string Value { get; set; } = string.Empty;
 
-        public override string ToString() {
-            return $@"{Name}: {Value}";
-        }
-    }
+    public string Format(params object[] args) => string.Format(Value, args);
+
+    public override string ToString() => $"{Name}: {Value}";
 }

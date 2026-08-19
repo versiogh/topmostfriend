@@ -1,99 +1,163 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
+using System.Runtime.InteropServices;
 
-namespace TopMostFriend {
-    public class WindowInfo {
-        public IntPtr Handle { get; }
-        public int ProcessId { get; }
+namespace TopMostFriend;
 
-        public Process Owner => Process.GetProcessById(ProcessId);
+public sealed class WindowInfo
+{
+    public IntPtr Handle { get; }
+    public uint ProcessId { get; }
+    public uint ThreadId { get; }
 
-        public string Title => Win32.GetWindowTextString(Handle);
+    public string Title => Win32.GetWindowTextString(Handle);
 
-        public bool IsTopMost {
-            get => (Win32.GetWindowLongPtr(Handle, Win32.GWL_EXSTYLE).ToInt32() & Win32.WS_EX_TOPMOST) > 0;
-            set {
-                Win32.SetWindowPos(
-                    Handle, new IntPtr(value ? Win32.HWND_TOPMOST : Win32.HWND_NOTOPMOST),
-                    0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_SHOWWINDOW
-                );
+    public bool IsValid
+    {
+        get
+        {
+            if (Handle == IntPtr.Zero || !Win32.IsWindow(Handle))
+                return false;
+
+            uint threadId = Win32.GetWindowThreadProcessId(Handle, out uint processId);
+            return processId == ProcessId && threadId == ThreadId;
+        }
+    }
+
+    public bool IsTopMost
+    {
+        get
+        {
+            if (!IsValid)
+                return false;
+
+            long style = Win32.GetWindowLongPtr(Handle, Win32.GWL_EXSTYLE).ToInt64();
+            return (style & Win32.WS_EX_TOPMOST) != 0;
+        }
+    }
+
+    public bool IsOwnWindow => ProcessId == unchecked((uint)Environment.ProcessId);
+
+    public WindowInfo(IntPtr handle)
+    {
+        Handle = handle;
+        ThreadId = Win32.GetWindowThreadProcessId(handle, out uint processId);
+        ProcessId = processId;
+    }
+
+    public WindowInfo(IntPtr handle, uint processId, uint threadId)
+    {
+        Handle = handle;
+        ProcessId = processId;
+        ThreadId = threadId;
+    }
+
+    public bool TrySetTopMost(bool value)
+    {
+        if (!IsValid)
+            return false;
+
+        bool success = Win32.SetWindowPos(
+            Handle,
+            value ? Win32.HWND_TOPMOST : Win32.HWND_NOTOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SetWindowPosFlags.SWP_NOMOVE |
+            SetWindowPosFlags.SWP_NOSIZE |
+            SetWindowPosFlags.SWP_NOACTIVATE);
+
+        return success && IsValid && IsTopMost == value;
+    }
+
+    public bool TryToggleTopMost(bool activateWhenPinned, out bool originalState, out bool newState)
+    {
+        originalState = IsTopMost;
+        newState = originalState;
+
+        if (!IsValid)
+            return false;
+
+        bool target = !originalState;
+        if (!TrySetTopMost(target))
+            return false;
+
+        newState = target;
+        if (target && activateWhenPinned)
+            TryActivate();
+
+        return true;
+    }
+
+    public bool TryActivate()
+    {
+        if (!IsValid)
+            return false;
+
+        if (Win32.IsIconic(Handle))
+            Win32.ShowWindow(Handle, Win32.SW_RESTORE);
+
+        return Win32.SetForegroundWindow(Handle);
+    }
+
+    public Icon? TryGetIconClone(uint timeoutMilliseconds = 80)
+    {
+        if (!IsValid)
+            return null;
+
+        try
+        {
+            IntPtr handle = Win32.TryGetWindowIconHandle(Handle, timeoutMilliseconds);
+            if (handle == IntPtr.Zero)
+                return null;
+
+            using Icon borrowed = Icon.FromHandle(handle);
+            return (Icon)borrowed.Clone();
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is ExternalException)
+        {
+            return null;
+        }
+    }
+
+    public static WindowInfo? GetForegroundWindow()
+    {
+        IntPtr handle = Win32.GetForegroundWindow();
+        if (handle == IntPtr.Zero || !Win32.IsWindow(handle))
+            return null;
+
+        WindowInfo window = new(handle);
+        return window.ProcessId == 0 ? null : window;
+    }
+
+    public static IReadOnlyList<WindowInfo> GetAllWindows(bool includeHidden = false, bool includeCloaked = false)
+    {
+        List<WindowInfo> windows = new();
+
+        Win32.EnumWindows((hWnd, _) =>
+        {
+            try
+            {
+                if (!includeHidden && !Win32.IsWindowVisible(hWnd))
+                    return true;
+
+                if (!includeCloaked && Win32.IsWindowCloaked(hWnd))
+                    return true;
+
+                WindowInfo window = new(hWnd);
+                if (window.ProcessId != 0 && window.ThreadId != 0 && window.IsValid)
+                    windows.Add(window);
             }
-        }
-
-        public bool IsOwnWindow
-            => Owner == Process.GetCurrentProcess();
-
-        public Icon Icon {
-            get {
-                IntPtr icon = Win32.SendMessage(Handle, Win32.WM_GETICON, Win32.ICON_SMALL2, 0);
-
-                if(icon == IntPtr.Zero) {
-                    icon = Win32.SendMessage(Handle, Win32.WM_GETICON, Win32.ICON_SMALL, 0);
-
-                    if(icon == IntPtr.Zero) {
-                        icon = Win32.SendMessage(Handle, Win32.WM_GETICON, Win32.ICON_BIG, 0);
-
-                        if(icon == IntPtr.Zero) {
-                            icon = Win32.GetClassLongPtr(Handle, Win32.GCL_HICON);
-
-                            if(icon == IntPtr.Zero)
-                                icon = Win32.GetClassLongPtr(Handle, Win32.GCL_HICONSM);
-                        }
-                    }
-                }
-
-                return icon == IntPtr.Zero ? null : Icon.FromHandle(icon);
+            catch (Exception ex)
+            {
+                AppLog.Write("Ignoring a window that disappeared during enumeration.", ex);
             }
-        }
 
-        public Image IconBitmap
-            => Icon?.ToBitmap();
+            return true;
+        }, IntPtr.Zero);
 
-        public WindowInfo(IntPtr handle)
-            : this(handle, FindOwnerId(handle)) { }
-
-        public WindowInfo(IntPtr handle, int processId) {
-            Handle = handle;
-            ProcessId = processId;
-        }
-
-        public void SwitchTo() {
-            Win32.SwitchToThisWindow(Handle, false);
-        }
-
-        public bool ToggleTopMost(bool switchWindow = true) {
-            bool expected = !IsTopMost;
-            IsTopMost = expected;
-            bool success = IsTopMost == expected;
-            if(switchWindow && expected && success)
-                SwitchTo();
-            return success;
-        }
-
-        public bool ToggleTopMostElevated(bool switchWindow = true) {
-            return UAC.ToggleWindowTopMost(this, switchWindow) == 0;
-        }
-
-        public static int FindOwnerId(IntPtr hWnd) {
-            Win32.GetWindowThreadProcessId(hWnd, out int procId);
-            return procId;
-        }
-
-        public static WindowInfo GetForegroundWindow() {
-            return new WindowInfo(Win32.GetForegroundWindow());
-        }
-
-        public static IEnumerable<WindowInfo> GetAllWindows(bool includeHidden = false) {
-            List<IntPtr> windows = new List<IntPtr>();
-            Win32.EnumWindows(new Win32.EnumWindowsProc((hWnd, lParam) => {
-                if(includeHidden || Win32.IsWindowVisible(hWnd))
-                    windows.Add(hWnd);
-                return true;
-            }), 0);
-            return windows.Select(w => new WindowInfo(w));
-        }
+        return windows;
     }
 }

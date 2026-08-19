@@ -1,107 +1,73 @@
-﻿using System.Diagnostics;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace TopMostFriend {
-    public sealed class AboutWindow : Form {
-        private const int BUTTON_SPACING = 6;
-        private const int GENERAL_PADDING = 12;
-        private const int BUTTON_HEIGHT = 23;
-        private const int BUTTON_WIDTH = 70;
+namespace TopMostFriend;
 
-        public static void Display() {
-            using (AboutWindow about = new AboutWindow())
-                about.ShowDialog();
-        }
+public sealed class AboutWindow : Form
+{
+    public static void Display()
+    {
+        using AboutWindow about = new();
+        about.ShowDialog();
+    }
 
-        public AboutWindow() {
-            Text = Locale.String(@"AboutTitle");
-            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-            BackgroundImage = Properties.Resources.about;
-            StartPosition = FormStartPosition.CenterScreen;
-            FormBorderStyle = FormBorderStyle.None;
-            AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = Properties.Resources.about.Size;
-            MaximizeBox = MinimizeBox = false;
-            MaximumSize = MinimumSize = Size;
-            TopMost = true;
+    public AboutWindow()
+    {
+        Text = Locale.String("AboutTitle");
+        StartPosition = FormStartPosition.CenterScreen;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        AutoScaleMode = AutoScaleMode.Dpi;
+        AutoScaleDimensions = new SizeF(96F, 96F);
+        ClientSize = new Size(440, 200);
+        MaximizeBox = false;
+        MinimizeBox = false;
+        ShowInTaskbar = false;
+        TopMost = true;
+        Icon = AppIcon.Window;
 
-            int tabIndex = 0;
+        Label title = new()
+        {
+            Text = $"{Program.TITLE} v{Application.ProductVersion}",
+            Font = new Font(Font, FontStyle.Bold),
+            AutoSize = true,
+            Location = new Point(18, 18),
+        };
 
-            Button closeButton = new Button {
-                Text = Locale.String(@"AboutClose"),
-                Size = new Size(BUTTON_WIDTH, BUTTON_HEIGHT),
-                TabIndex = ++tabIndex,
-            };
-            closeButton.Location = new Point(ClientSize.Width - closeButton.Size.Width - GENERAL_PADDING, ClientSize.Height - closeButton.Size.Height - GENERAL_PADDING);
-            closeButton.Click += (s, e) => Close();
-            Controls.Add(closeButton);
+        Label description = new()
+        {
+            Text = Locale.String("AboutDescription"),
+            AutoSize = false,
+            Location = new Point(18, 50),
+            Size = new Size(404, 70),
+        };
 
-            Button websiteButton = new Button {
-                Text = Locale.String(@"AboutWebsite"),
-                Size = new Size(BUTTON_WIDTH, BUTTON_HEIGHT),
-                TabIndex = ++tabIndex,
-            };
-            websiteButton.Location = new Point(closeButton.Left - websiteButton.Width - BUTTON_SPACING, closeButton.Top);
-            websiteButton.Click += (s, e) => Process.Start(@"https://flash.moe/topmostfriend");
-            Controls.Add(websiteButton);
+        Button website = new()
+        {
+            Text = Locale.String("AboutWebsite"),
+            Size = new Size(90, 27),
+            Location = new Point(18, 132),
+        };
+        website.Click += (_, _) => ShellHelper.OpenUrl("https://github.com/flashwave/topmostfriend");
 
-            Button donateButton = new Button {
-                Text = Locale.String(@"AboutDonate"),
-                Size = new Size(BUTTON_WIDTH, BUTTON_HEIGHT),
-                TabIndex = ++tabIndex,
-            };
-            donateButton.Location = new Point(websiteButton.Left - donateButton.Width - BUTTON_SPACING, closeButton.Top);
-            donateButton.Click += (s, e) => Process.Start(@"https://flash.moe/donate");
-            Controls.Add(donateButton);
+        Button donate = new()
+        {
+            Text = Locale.String("AboutDonate"),
+            Size = new Size(90, 27),
+            Location = new Point(114, 132),
+        };
+        donate.Click += (_, _) => ShellHelper.OpenUrl("https://flash.moe/donate");
 
-            Button creditButton = new Button {
-                Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top,
-                Text = string.Empty,
-                Size = new Size(300, 15),
-                TabIndex = ++tabIndex,
-                Cursor = Cursors.Hand,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.Transparent,
-            };
-            creditButton.FlatAppearance.BorderSize = 0;
-            creditButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
-            creditButton.FlatAppearance.MouseDownBackColor = Color.Transparent;
-            creditButton.Location = new Point(ClientSize.Width - creditButton.Size.Width - GENERAL_PADDING, 46);
-            creditButton.Click += (s, e) => Process.Start(@"https://flash.moe");
+        Button close = new()
+        {
+            Text = Locale.String("AboutClose"),
+            Size = new Size(90, 27),
+            Location = new Point(ClientSize.Width - 108, 132),
+            DialogResult = DialogResult.OK,
+        };
 
-            Button creditButtonfff = new Button {
-                Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top,
-                Text = string.Empty,
-                Size = new Size(300, 15),
-                TabIndex = ++tabIndex,
-                Cursor = Cursors.Hand,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.Transparent,
-            };
-            creditButtonfff.FlatAppearance.BorderSize = 0;
-            creditButtonfff.FlatAppearance.MouseOverBackColor = Color.Transparent;
-            creditButtonfff.FlatAppearance.MouseDownBackColor = Color.Transparent;
-            creditButtonfff.Location = new Point(ClientSize.Width - creditButtonfff.Size.Width - GENERAL_PADDING, 64);
-            creditButtonfff.Click += (s, e) => Process.Start(@"http://www.famfamfam.com/lab/icons/silk/");
-
-            Controls.Add(creditButtonfff);
-
-            Controls.Add(new Label {
-                Text = @"v" + Application.ProductVersion.Substring(0, Application.ProductVersion.Length - 2), // cut off the last dingus
-                TextAlign = ContentAlignment.MiddleLeft,
-                AutoSize = true,
-                Location = new Point(127, 97),
-                BackColor = Color.Transparent,
-                ForeColor = Color.White,
-            });
-        }
-
-        protected override void OnMouseDown(MouseEventArgs e) {
-            base.OnMouseDown(e);
-
-            Win32.ReleaseCapture();
-            Win32.SendMessage(Handle, Win32.WM_NCLBUTTONDOWN, Win32.HT_CAPTION, 0);
-        }
+        AcceptButton = close;
+        CancelButton = close;
+        Controls.AddRange(new Control[] { title, description, website, donate, close });
     }
 }

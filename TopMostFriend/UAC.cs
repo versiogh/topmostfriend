@@ -1,81 +1,121 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
+using System.Linq;
 using System.Security.Principal;
-using System.Windows.Forms;
+using System.Threading.Tasks;
 
-namespace TopMostFriend {
-    public static class UAC {
-        private static bool? IsElevatedValue;
-        private static string ExecutablePathValue;
+namespace TopMostFriend;
 
-        static UAC() {
-            ExecutablePath = null;
+public static class UAC
+{
+    public const int ErrorCancelled = 1223;
+    public const int ErrorTimeout = 1460;
+
+    private static bool? _isElevated;
+
+    public static bool IsElevated
+    {
+        get
+        {
+            if (_isElevated.HasValue)
+                return _isElevated.Value;
+
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new(identity);
+            _isElevated = principal.IsInRole(WindowsBuiltInRole.Administrator);
+            return _isElevated.Value;
         }
+    }
 
-        public static bool IsElevated {
-            get {
-                if(!IsElevatedValue.HasValue)
-                    using(WindowsIdentity identity = WindowsIdentity.GetCurrent())
-                        IsElevatedValue = identity != null && new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+    public static int SetWindowTopMostElevated(WindowInfo window, bool targetState, bool activate) =>
+        RunElevatedTask(BuildSetTopMostArguments(window, targetState, activate));
 
-                return IsElevatedValue.Value;
-            }
-        }
+    /// <summary>
+    /// Runs the elevated helper without blocking the calling thread. RunElevatedTask waits for the
+    /// helper to exit, so calling it directly from the UI thread freezes the tray icon, the menu
+    /// and every dialog for the duration of the wait.
+    /// </summary>
+    public static Task<int> SetWindowTopMostElevatedAsync(WindowInfo window, bool targetState, bool activate)
+    {
+        string[] args = BuildSetTopMostArguments(window, targetState, activate);
+        return Task.Run(() => RunElevatedTask(args));
+    }
 
-        public static string ExecutablePath {
-            get => ExecutablePathValue;
-            set {
-                ExecutablePathValue = string.IsNullOrWhiteSpace(value) || !File.Exists(value)
-                    ? Assembly.GetEntryAssembly().Location
-                    : value;
-            }
-        }
+    private static string[] BuildSetTopMostArguments(WindowInfo window, bool targetState, bool activate) =>
+        new[]
+        {
+            $"--set-topmost={(targetState ? 1 : 0)}",
+            $"--hwnd={window.Handle.ToInt64()}",
+            $"--pid={window.ProcessId}",
+            $"--tid={window.ThreadId}",
+            $"--activate={(activate ? 1 : 0)}",
+        };
 
-        public static int RunElevatedTask(string args) {
-            if(string.IsNullOrWhiteSpace(args))
-                throw new ArgumentException(@"No arguments provided.", nameof(args));
+    public static int RunElevatedTask(params string[] args)
+    {
+        if (args == null || args.Length == 0)
+            throw new ArgumentException("No arguments provided.", nameof(args));
 
-            try {
-                Process process = Process.Start(new ProcessStartInfo {
-                    UseShellExecute = true,
-                    FileName = ExecutablePath,
-                    WorkingDirectory = Environment.CurrentDirectory,
-                    Arguments = args,
-                    Verb = @"runas",
-                });
-
-                process.WaitForExit();
-
-                return process.ExitCode;
-            } catch(Win32Exception ex) {
-                return ex.ErrorCode;
-            }
-        }
-
-        public static int ToggleWindowTopMost(WindowInfo window, bool switchWindow)
-            => ToggleWindowTopMost(window.Handle, switchWindow);
-
-        public static int ToggleWindowTopMost(IntPtr handle, bool switchWindow)
-            => RunElevatedTask(switchWindow ? $@"--toggle={handle}" : $@"--toggle={handle} --background={handle}");
-
-        public static void RestartElevated() {
-            if(IsElevated)
-                return;
-
-            Program.Shutdown();
-
-            Process.Start(new ProcessStartInfo {
+        try
+        {
+            ProcessStartInfo info = new()
+            {
                 UseShellExecute = true,
-                FileName = ExecutablePath,
-                WorkingDirectory = Environment.CurrentDirectory,
-                Arguments = string.Join(@" ", Environment.GetCommandLineArgs()),
-                Verb = @"runas",
-            });
+                FileName = ShellHelper.ExecutablePath,
+                WorkingDirectory = AppContext.BaseDirectory,
+                Arguments = string.Join(" ", args.Select(ShellHelper.QuoteArgument)),
+                Verb = "runas",
+            };
 
-            Application.Exit();
+            using Process? process = Process.Start(info);
+            if (process == null)
+                return -1;
+
+            // The helper only performs a SetWindowPos operation, but a self-contained
+            // single-file build has to extract its bundle on the first elevated run and
+            // may also be scanned by security software, so the budget is generous.
+            // The caller still verifies the effective window state afterwards.
+            if (!process.WaitForExit(60_000))
+            {
+                AppLog.Write("Elevated helper timed out.");
+                return ErrorTimeout;
+            }
+
+            return process.ExitCode;
+        }
+        catch (Win32Exception ex)
+        {
+            AppLog.Write("Elevated helper could not be started.", ex);
+            return ex.NativeErrorCode;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("Elevated helper failed.", ex);
+            return -1;
+        }
+    }
+
+    public static bool TryRestartElevated()
+    {
+        if (IsElevated)
+            return true;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                FileName = ShellHelper.ExecutablePath,
+                WorkingDirectory = AppContext.BaseDirectory,
+                Verb = "runas",
+            });
+            return true;
+        }
+        catch (Exception ex) when (ex is Win32Exception || ex is InvalidOperationException)
+        {
+            AppLog.Write("Elevated restart was cancelled or failed.", ex);
+            return false;
         }
     }
 }

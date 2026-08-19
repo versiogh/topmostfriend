@@ -1,110 +1,191 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Security;
 using System.Text;
 
-namespace TopMostFriend {
-    public static class Settings {
-        private const string ROOT = @"Software\flash.moe\TopMostFriend";
+namespace TopMostFriend;
 
-        private static RegistryKey GetRoot() {
-            RegistryKey root = Registry.CurrentUser.OpenSubKey(ROOT, true);
+public static class Settings
+{
+    private const string RootPath = @"Software\flash.moe\TopMostFriend";
 
-            if (root == null)
-                root = Registry.CurrentUser.CreateSubKey(ROOT);
+    private static RegistryKey OpenRoot(bool writable = true) =>
+        Registry.CurrentUser.CreateSubKey(RootPath, writable)
+        ?? throw new InvalidOperationException("Unable to open TopMostFriend settings registry key.");
 
-            return root;
-        }
-
-        public static T Get<T>(string name, T fallback = default) {
-            try {
-                return (T)Convert.ChangeType(GetRoot().GetValue(name, fallback), typeof(T));
-            } catch {
-                return fallback;
-            }
-        }
-
-        public static string[] Get(string name, string[] fallback = null) {
-            if(!(GetRoot().GetValue(name, null) is byte[] buffer))
+    public static T Get<T>(string name, T fallback = default!)
+    {
+        try
+        {
+            using RegistryKey key = OpenRoot(false);
+            object? value = key.GetValue(name, null);
+            if (value == null)
                 return fallback;
 
-            List<string> strings = new List<string>();
+            Type target = typeof(T);
+            if (target == typeof(bool))
+                return (T)(object)(Convert.ToInt32(value, CultureInfo.InvariantCulture) != 0);
 
-            using (MemoryStream src = new MemoryStream(buffer))
-            using (MemoryStream ms = new MemoryStream()) {
-                int b;
+            if (target.IsEnum)
+                return (T)Enum.ToObject(target, Convert.ToInt32(value, CultureInfo.InvariantCulture));
 
-                for(; ; ) {
-                    b = src.ReadByte();
+            return (T)Convert.ChangeType(value, target, CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex) when (
+            ex is IOException ||
+            ex is UnauthorizedAccessException ||
+            ex is SecurityException ||
+            ex is InvalidCastException ||
+            ex is FormatException ||
+            ex is OverflowException)
+        {
+            AppLog.Write($"Failed to read setting '{name}'.", ex);
+            return fallback;
+        }
+    }
 
-                    if (b == -1)
-                        break;
-                    else if (b != 0)
-                        ms.WriteByte((byte)b);
-                    else {
-                        strings.Add(Encoding.UTF8.GetString(ms.ToArray()));
-                        ms.SetLength(0);
+    public static string[]? Get(string name, string[]? fallback = null)
+    {
+        try
+        {
+            using RegistryKey key = OpenRoot(false);
+            object? value = key.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+
+            if (value is string[] multiString)
+                return multiString;
+
+            // Backward compatibility with TopMostFriend 1.x, which stored arrays
+            // as a NUL-delimited UTF-8 binary value.
+            if (value is byte[] buffer)
+            {
+                List<string> values = new();
+                using MemoryStream current = new();
+
+                foreach (byte b in buffer)
+                {
+                    if (b == 0)
+                    {
+                        values.Add(Encoding.UTF8.GetString(current.ToArray()));
+                        current.SetLength(0);
+                    }
+                    else
+                    {
+                        current.WriteByte(b);
                     }
                 }
+
+                if (current.Length > 0)
+                    values.Add(Encoding.UTF8.GetString(current.ToArray()));
+
+                return values.ToArray();
             }
 
-            return strings.ToArray();
+            return fallback;
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write($"Failed to read array setting '{name}'.", ex);
+            return fallback;
+        }
+    }
+
+    public static bool Has(string name)
+    {
+        try
+        {
+            using RegistryKey key = OpenRoot(false);
+            return key.GetValue(name, null) != null;
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write($"Failed to check setting '{name}'.", ex);
+            return false;
+        }
+    }
+
+    public static void Set(string name, object? value)
+    {
+        if (value == null)
+        {
+            Remove(name);
+            return;
         }
 
-        public static bool Has(string name) {
-            try {
-                GetRoot().GetValueKind(name);
-                return true;
-            } catch {
-                return false;
-            }
-        }
-
-        public static void Set(string name, object value) {
-            if(value == null) {
-                Remove(name);
-                return;
-            }
-
-            switch(value) {
+        try
+        {
+            using RegistryKey key = OpenRoot();
+            switch (value)
+            {
                 case bool b:
-                    value = b ? 1 : 0;
+                    key.SetValue(name, b ? 1 : 0, RegistryValueKind.DWord);
+                    break;
+                case int i:
+                    key.SetValue(name, i, RegistryValueKind.DWord);
+                    break;
+                case string s:
+                    key.SetValue(name, s, RegistryValueKind.String);
+                    break;
+                default:
+                    key.SetValue(name, value);
                     break;
             }
-
-            GetRoot().SetValue(name, value);
         }
-
-        public static void Set(string name, string[] values) {
-            if(values == null || values.Length < 1) {
-                Remove(name);
-                return;
-            }
-
-            using (MemoryStream ms = new MemoryStream()) {
-                foreach (string value in values) {
-                    byte[] buffer = Encoding.UTF8.GetBytes(value);
-                    ms.Write(buffer, 0, buffer.Length);
-                    ms.WriteByte(0);
-                }
-
-                GetRoot().SetValue(name, ms.ToArray(), RegistryValueKind.Binary);
-            }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write($"Failed to write setting '{name}'.", ex);
         }
+    }
 
-        public static void SetDefault(string name, object value) {
-            if (!Has(name))
-                Set(name, value);
+    public static void Set(string name, string[]? values)
+    {
+        try
+        {
+            using RegistryKey key = OpenRoot();
+            key.SetValue(name, values ?? Array.Empty<string>(), RegistryValueKind.MultiString);
         }
-
-        public static void SetDefault(string name, string[] value) {
-            if (!Has(name))
-                Set(name, value);
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write($"Failed to write array setting '{name}'.", ex);
         }
+    }
 
-        public static void Remove(string name) {
-            GetRoot().DeleteValue(name, false);
+    public static void SetDefault(string name, object value)
+    {
+        if (!Has(name))
+            Set(name, value);
+    }
+
+    public static void SetDefault(string name, string[] value)
+    {
+        if (!Has(name))
+            Set(name, value);
+    }
+
+    public static void Remove(string name)
+    {
+        try
+        {
+            using RegistryKey key = OpenRoot();
+            key.DeleteValue(name, false);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write($"Failed to remove setting '{name}'.", ex);
+        }
+    }
+
+    public static void ResetAll()
+    {
+        try
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(RootPath, false);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is SecurityException)
+        {
+            AppLog.Write("Failed to reset settings.", ex);
         }
     }
 }

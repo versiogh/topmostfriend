@@ -1,21 +1,20 @@
-﻿using System.Xml.Serialization;
+using System.Xml.Serialization;
 
-namespace TopMostFriend.Languages {
-    public class LanguageInfo {
-        [XmlElement(@"Id")]
-        public string Id { get; set; }
+namespace TopMostFriend.Languages;
 
-        [XmlElement(@"NameNative")]
-        public string NameNative { get; set; }
+public sealed class LanguageInfo
+{
+    [XmlElement("Id")]
+    public string Id { get; set; } = string.Empty;
 
-        [XmlElement(@"NameEnglish")]
-        public string NameEnglish { get; set; }
+    [XmlElement("NameNative")]
+    public string NameNative { get; set; } = string.Empty;
 
-        [XmlElement(@"TargetVersion")]
-        public string TargetVersion { get; set; }
+    [XmlElement("NameEnglish")]
+    public string NameEnglish { get; set; } = string.Empty;
 
-        public override string ToString() {
-            return $@"{NameNative} / {NameEnglish} ({Id})";
-        }
-    }
+    [XmlElement("TargetVersion")]
+    public string TargetVersion { get; set; } = string.Empty;
+
+    public override string ToString() => $"{NameNative} / {NameEnglish} ({Id})";
 }

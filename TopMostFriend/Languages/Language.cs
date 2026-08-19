@@ -1,22 +1,22 @@
-﻿using System;
+using System;
 using System.Linq;
-using System.Xml;
 using System.Xml.Serialization;
 
-namespace TopMostFriend.Languages {
-    [XmlRoot(@"Language")]
-    public class Language {
-        [XmlElement(@"Info")]
-        public LanguageInfo Info { get; set; }
+namespace TopMostFriend.Languages;
 
-        [XmlArray(@"Strings")]
-        [XmlArrayItem(@"String", Type = typeof(LanguageString))]
-        public LanguageString[] Strings { get; set; }
+[XmlRoot("Language")]
+public sealed class Language
+{
+    [XmlElement("Info")]
+    public LanguageInfo Info { get; set; } = new();
 
-        public LanguageString GetString(string name) {
-            if(name == null)
-                throw new ArgumentNullException(nameof(name));
-            return Strings.FirstOrDefault(s => name.Equals(s.Name));
-        }
+    [XmlArray("Strings")]
+    [XmlArrayItem("String", Type = typeof(LanguageString))]
+    public LanguageString[] Strings { get; set; } = Array.Empty<LanguageString>();
+
+    public LanguageString? GetString(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return Strings.FirstOrDefault(s => string.Equals(name, s.Name, StringComparison.Ordinal));
     }
 }

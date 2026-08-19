@@ -1,0 +1,50 @@
+name: Build Windows executables
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        runtime: [win-x64, win-x86]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore TopMostFriend.sln
+
+      - name: Build
+        run: dotnet build TopMostFriend.sln -c Release --no-restore
+
+      - name: Publish single-file executable
+        shell: pwsh
+        run: >-
+          dotnet publish TopMostFriend/TopMostFriend.csproj
+          -c Release
+          -r ${{ matrix.runtime }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -o publish/${{ matrix.runtime }}
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: TopMostFriend-${{ matrix.runtime }}
+          path: publish/${{ matrix.runtime }}/TopMostFriend.exe
+          if-no-files-found: error
