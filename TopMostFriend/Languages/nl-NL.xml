@@ -8,6 +8,7 @@
   </Info>
   <Strings>
     <String name="AlreadyRunning">{0} is al gestart.</String>
+	<String name="TrayActions">Acties…</String>
     <String name="TrayRefresh">&amp;Verversen</String>
     <String name="TraySettings">&amp;Instellingen</String>
     <String name="TrayAbout">&amp;Over</String>
@@ -36,8 +37,9 @@
     <String name="SettingsOptionsShiftBlacklist">SHIFT+CLICK items om ze aan de titel-blacklist toe te voegen</String>
     <String name="SettingsOptionsRevertOnExit">Herstel gewijzigde statussen bij afsluiten</String>
     <String name="SettingsOptionsShowTrayList">Toon open vensters in het systeemvakmenu</String>
-    <String name="SettingsOptionsShowMenuLeftClick">Toon menu met linkermuisklik</String>
-    <String name="SettingsOptionsShowMenuRightClick">Toon menu met rechtermuisklik</String>
+    <String name="SettingsOptionsShowMenu">Toon menu met:</String>
+    <String name="SettingsOptionsShowMenuLeftClick">Linkermuisklik</String>
+    <String name="SettingsOptionsShowMenuRightClick">Rechtermuisklik</String>
     <String name="SettingsOptionsShowMenuError">Er moet minstens één muisknop ingeschakeld zijn om het systeemvakmenu te openen.</String>
     <String name="SettingsOptionsAlwaysAdmin">Start altijd als Administrator</String>
     <String name="SettingsLanguageTitle">Taal (Language)</String>

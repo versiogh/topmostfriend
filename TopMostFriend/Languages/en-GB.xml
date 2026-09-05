@@ -8,6 +8,7 @@
   </Info>
   <Strings>
     <String name="AlreadyRunning">An instance of {0} is already running.</String>
+	<String name="TrayActions">Actions…</String>
     <String name="TrayRefresh">&amp;Refresh</String>
     <String name="TraySettings">&amp;Settings</String>
     <String name="TrayAbout">&amp;About</String>
@@ -36,8 +37,9 @@
     <String name="SettingsOptionsShiftBlacklist">SHIFT+CLICK items in the tray list to add to the title blacklist</String>
     <String name="SettingsOptionsRevertOnExit">Revert status to before {0} altered them on exit</String>
     <String name="SettingsOptionsShowTrayList">Show list of open windows in the tray menu</String>
-    <String name="SettingsOptionsShowMenuLeftClick">Show menu with left click</String>
-    <String name="SettingsOptionsShowMenuRightClick">Show menu with right click</String>
+    <String name="SettingsOptionsShowMenu">Show menu with:</String>
+    <String name="SettingsOptionsShowMenuLeftClick">Left click</String>
+    <String name="SettingsOptionsShowMenuRightClick">Right click</String>
     <String name="SettingsOptionsShowMenuError">At least one mouse button must be enabled to open the tray menu.</String>
     <String name="SettingsOptionsAlwaysAdmin">Always run as Administrator</String>
     <String name="SettingsLanguageTitle">Language</String>

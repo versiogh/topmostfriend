@@ -53,7 +53,7 @@ public sealed class SettingsWindow : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(560, 568);
+        ClientSize = new Size(560, 544);
         MaximizeBox = false;
         MinimizeBox = false;
         TopMost = true;
@@ -102,7 +102,7 @@ public sealed class SettingsWindow : Form
         {
             Text = Locale.String("SettingsOptionsTitle"),
             Location = new Point(10, 118),
-            Size = new Size(540, 268),
+            Size = new Size(540, 244),
         };
 
         _toggleNotification = AddOption(options, Locale.String("SettingsOptionsToggleNotify"), 22, Settings.Get(Program.TOGGLE_BALLOON_SETTING, Program.ToggleBalloonDefault));
@@ -113,13 +113,40 @@ public sealed class SettingsWindow : Form
         _showWindowList = AddOption(options, Locale.String("SettingsOptionsShowTrayList"), 142, Settings.Get(Program.SHOW_WINDOW_LIST, true));
         _alwaysAdmin = AddOption(options, Locale.String("SettingsOptionsAlwaysAdmin"), 166, Settings.Get(Program.ALWAYS_ADMIN_SETTING, false));
         _showEmptyTitles = AddOption(options, Locale.String("SettingsOptionsShowEmptyTitles"), 190, Settings.Get(Program.SHOW_EMPTY_WINDOW_SETTING, false));
-        _showMenuLeftClick = AddOption(options, Locale.String("SettingsOptionsShowMenuLeftClick"), 214, Settings.Get(Program.SHOW_MENU_LEFT_CLICK, true));
-        _showMenuRightClick = AddOption(options, Locale.String("SettingsOptionsShowMenuRightClick"), 238, Settings.Get(Program.SHOW_MENU_RIGHT_CLICK, true));
+        Label showMenuLabel = new()
+        {
+            Text = Locale.String("SettingsOptionsShowMenu"),
+            Location = new Point(12, 220),
+            AutoSize = true,
+        };
+
+        _showMenuLeftClick = new CheckBox
+        {
+            Text = Locale.String("SettingsOptionsShowMenuLeftClick"),
+            Location = new Point(118, 218),
+            AutoSize = true,
+            Checked = Settings.Get(Program.SHOW_MENU_LEFT_CLICK, true),
+        };
+
+        _showMenuRightClick = new CheckBox
+        {
+            Text = Locale.String("SettingsOptionsShowMenuRightClick"),
+            Location = new Point(220, 218),
+            AutoSize = true,
+            Checked = Settings.Get(Program.SHOW_MENU_RIGHT_CLICK, true),
+        };
+
+        options.Controls.AddRange(new Control[]
+        {
+            showMenuLabel,
+            _showMenuLeftClick,
+            _showMenuRightClick
+        });
 
         GroupBox languageGroup = new()
         {
             Text = Locale.String("SettingsLanguageTitle"),
-            Location = new Point(10, 394),
+            Location = new Point(10, 370),
             Size = new Size(540, 62),
         };
         _language = new ComboBox
@@ -136,7 +163,7 @@ public sealed class SettingsWindow : Form
         GroupBox other = new()
         {
             Text = Locale.String("SettingsOtherTitle"),
-            Location = new Point(10, 464),
+            Location = new Point(10, 440),
             Size = new Size(540, 58),
         };
 
@@ -176,7 +203,7 @@ public sealed class SettingsWindow : Form
         Button ok = new()
         {
             Text = Locale.String("SettingsOk"),
-            Location = new Point(310, 532),
+            Location = new Point(310, 508),
             Size = new Size(75, 27),
         };
         ok.Click += (_, _) => { if (ApplySettings()) Close(); };
@@ -184,7 +211,7 @@ public sealed class SettingsWindow : Form
         Button cancel = new()
         {
             Text = Locale.String("SettingsCancel"),
-            Location = new Point(391, 532),
+            Location = new Point(391, 508),
             Size = new Size(75, 27),
         };
         cancel.Click += (_, _) => Close();
@@ -192,7 +219,7 @@ public sealed class SettingsWindow : Form
         Button apply = new()
         {
             Text = Locale.String("SettingsApply"),
-            Location = new Point(472, 532),
+            Location = new Point(472, 508),
             Size = new Size(75, 27),
         };
         apply.Click += (_, _) => ApplySettings();

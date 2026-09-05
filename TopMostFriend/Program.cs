@@ -254,7 +254,7 @@ public static class Program
         ToolStripMenuItem quit = new(Locale.String("TrayQuit"));
         quit.Click += (_, _) => Application.Exit();
 
-        ToolStripMenuItem actions = new("Actions…");
+        ToolStripMenuItem actions = new(Locale.String("TrayActions"));
         actions.DropDownItems.Add(_refreshButton);
         actions.DropDownItems.Add(settings);
         actions.DropDownItems.Add(about);
