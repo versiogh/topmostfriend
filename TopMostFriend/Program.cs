@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -61,6 +62,14 @@ public static class Program
     private static bool _keepMenuOpenOnce;
     private static bool _restartRequested;
     private static int _shutdownStarted;
+
+    private static readonly MethodInfo? ContextMenuShowInTaskbarMethod =
+        typeof(ContextMenuStrip).GetMethod(
+            "ShowInTaskbar",
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            types: new[] { typeof(int), typeof(int) },
+            modifiers: null);
 
     private static readonly object DynamicSeparatorTag = new();
 
@@ -232,19 +241,28 @@ public static class Program
                 _hotKeys.BeginInvoke(new Action(RefreshWindowList));
         };
 
-        _listActionItems = new ToolStripItem[]
-        {
-            new ToolStripSeparator(),
-            _refreshButton,
-        };
-
         ToolStripMenuItem settings = new(Locale.String("TraySettings"));
         settings.Click += (_, _) => SettingsWindow.Display();
+
         ToolStripMenuItem about = new(Locale.String("TrayAbout"));
         about.Click += (_, _) => AboutWindow.Display();
+
         ToolStripMenuItem quit = new(Locale.String("TrayQuit"));
         quit.Click += (_, _) => Application.Exit();
-        _appActionItems = new ToolStripItem[] { settings, about, quit };
+
+        ToolStripMenuItem actions = new("Actions…");
+        actions.DropDownItems.Add(_refreshButton);
+        actions.DropDownItems.Add(settings);
+        actions.DropDownItems.Add(about);
+        actions.DropDownItems.Add(quit);
+
+        _listActionItems = new ToolStripItem[]
+        {
+        new ToolStripSeparator(),
+        actions,
+        };
+
+        _appActionItems = Array.Empty<ToolStripItem>();
 
         _contextMenu.Items.AddRange(_appActionItems);
 
@@ -268,12 +286,11 @@ public static class Program
 
     private static void TrayIcon_MouseDown(object? sender, MouseEventArgs e)
     {
-        if ((e.Button & MouseButtons.Right) == 0)
+        if ((e.Button & MouseButtons.Left) == 0)
             return;
 
-        // The window list is built here, before the shell shows the drop-down. Building it from
-        // Opening instead means the menu is laid out and positioned for the size it had on the
-        // previous open, which is how it ends up clipped or unpainted next to the clock.
+        // Build the window list before showing the menu so that its final size is
+        // known before WinForms positions the drop-down.
         try
         {
             RefreshWindowList();
@@ -284,10 +301,54 @@ public static class Program
             AppLog.Write("Failed to build the tray menu.", ex);
         }
 
-        // A notification-area menu needs a foreground owner, otherwise it can fail to repaint and
-        // does not dismiss when the user clicks elsewhere.
+        // This is the same foreground-window handling used by NotifyIcon itself
+        // before displaying its native context menu.
         if (_hotKeys != null && !_hotKeys.IsDisposed && _hotKeys.IsHandleCreated)
             Win32.SetForegroundWindow(_hotKeys.Handle);
+
+        if (_contextMenu == null || _contextMenu.IsDisposed)
+            return;
+
+        Point cursor = Cursor.Position;
+
+        try
+        {
+            // NotifyIcon uses ContextMenuStrip.ShowInTaskbar() for its native
+            // right-click menu. This internal method deliberately allows the
+            // menu to overlap the taskbar and applies the same positioning logic.
+            if (ContextMenuShowInTaskbarMethod != null)
+            {
+                ContextMenuShowInTaskbarMethod.Invoke(
+                    _contextMenu,
+                    new object[] { cursor.X, cursor.Y });
+            }
+            else
+            {
+                // Fallback for a future WinForms version where the internal
+                // method might no longer exist.
+                _contextMenu.Show(
+                    cursor,
+                    ToolStripDropDownDirection.AboveLeft);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("Failed to show the tray menu on left click.", ex);
+
+            if (!_contextMenu.IsDisposed)
+            {
+                try
+                {
+                    _contextMenu.Show(
+                        cursor,
+                        ToolStripDropDownDirection.AboveLeft);
+                }
+                catch (Exception fallbackEx)
+                {
+                    AppLog.Write("Fallback tray menu display also failed.", fallbackEx);
+                }
+            }
+        }
     }
 
     private static void ContextMenu_Opening(object? sender, CancelEventArgs e)
