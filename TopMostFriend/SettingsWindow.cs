@@ -23,6 +23,8 @@ public sealed class SettingsWindow : Form
     private readonly CheckBox _shiftClickBlacklist;
     private readonly CheckBox _showHotkeyIcon;
     private readonly CheckBox _showWindowList;
+    private readonly CheckBox _showMenuLeftClick;
+    private readonly CheckBox _showMenuRightClick;
     private readonly CheckBox _alwaysRetryAsAdmin;
     private readonly CheckBox _revertOnExit;
     private readonly CheckBox _showEmptyTitles;
@@ -51,7 +53,7 @@ public sealed class SettingsWindow : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(560, 520);
+        ClientSize = new Size(560, 568);
         MaximizeBox = false;
         MinimizeBox = false;
         TopMost = true;
@@ -100,7 +102,7 @@ public sealed class SettingsWindow : Form
         {
             Text = Locale.String("SettingsOptionsTitle"),
             Location = new Point(10, 118),
-            Size = new Size(540, 220),
+            Size = new Size(540, 268),
         };
 
         _toggleNotification = AddOption(options, Locale.String("SettingsOptionsToggleNotify"), 22, Settings.Get(Program.TOGGLE_BALLOON_SETTING, Program.ToggleBalloonDefault));
@@ -111,11 +113,13 @@ public sealed class SettingsWindow : Form
         _showWindowList = AddOption(options, Locale.String("SettingsOptionsShowTrayList"), 142, Settings.Get(Program.SHOW_WINDOW_LIST, true));
         _alwaysAdmin = AddOption(options, Locale.String("SettingsOptionsAlwaysAdmin"), 166, Settings.Get(Program.ALWAYS_ADMIN_SETTING, false));
         _showEmptyTitles = AddOption(options, Locale.String("SettingsOptionsShowEmptyTitles"), 190, Settings.Get(Program.SHOW_EMPTY_WINDOW_SETTING, false));
+        _showMenuLeftClick = AddOption(options, Locale.String("SettingsOptionsShowMenuLeftClick"), 214, Settings.Get(Program.SHOW_MENU_LEFT_CLICK, true));
+        _showMenuRightClick = AddOption(options, Locale.String("SettingsOptionsShowMenuRightClick"), 238, Settings.Get(Program.SHOW_MENU_RIGHT_CLICK, true));
 
         GroupBox languageGroup = new()
         {
             Text = Locale.String("SettingsLanguageTitle"),
-            Location = new Point(10, 346),
+            Location = new Point(10, 394),
             Size = new Size(540, 62),
         };
         _language = new ComboBox
@@ -132,7 +136,7 @@ public sealed class SettingsWindow : Form
         GroupBox other = new()
         {
             Text = Locale.String("SettingsOtherTitle"),
-            Location = new Point(10, 416),
+            Location = new Point(10, 464),
             Size = new Size(540, 58),
         };
 
@@ -172,7 +176,7 @@ public sealed class SettingsWindow : Form
         Button ok = new()
         {
             Text = Locale.String("SettingsOk"),
-            Location = new Point(310, 484),
+            Location = new Point(310, 532),
             Size = new Size(75, 27),
         };
         ok.Click += (_, _) => { if (ApplySettings()) Close(); };
@@ -180,7 +184,7 @@ public sealed class SettingsWindow : Form
         Button cancel = new()
         {
             Text = Locale.String("SettingsCancel"),
-            Location = new Point(391, 484),
+            Location = new Point(391, 532),
             Size = new Size(75, 27),
         };
         cancel.Click += (_, _) => Close();
@@ -188,7 +192,7 @@ public sealed class SettingsWindow : Form
         Button apply = new()
         {
             Text = Locale.String("SettingsApply"),
-            Location = new Point(472, 484),
+            Location = new Point(472, 532),
             Size = new Size(75, 27),
         };
         apply.Click += (_, _) => ApplySettings();
@@ -304,6 +308,16 @@ public sealed class SettingsWindow : Form
 
     private bool ApplySettings()
     {
+        if (!_showMenuLeftClick.Checked && !_showMenuRightClick.Checked)
+        {
+            MessageBox.Show(
+                Locale.String("SettingsOptionsShowMenuError"),
+                Program.TITLE,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return false;
+        }
+
         // Every other option is still persisted when the hot key is rejected by Windows,
         // otherwise a single conflicting shortcut would block the whole dialog.
         bool hotKeyApplied = Program.SetForegroundHotKey(_keyCode, persist: true, showError: true);
@@ -313,6 +327,11 @@ public sealed class SettingsWindow : Form
         Settings.Set(Program.SHIFT_CLICK_BLACKLIST, _shiftClickBlacklist.Checked);
         Settings.Set(Program.SHOW_HOTKEY_ICON, _showHotkeyIcon.Checked);
         Settings.Set(Program.SHOW_WINDOW_LIST, _showWindowList.Checked);
+        Settings.Set(Program.SHOW_MENU_LEFT_CLICK, _showMenuLeftClick.Checked);
+        Settings.Set(Program.SHOW_MENU_RIGHT_CLICK, _showMenuRightClick.Checked);
+
+        Program.ApplyTrayMenuMouseSettings();
+
         Settings.Set(Program.ALWAYS_RETRY_ELEVATED, _alwaysRetryAsAdmin.Checked);
         Settings.Set(Program.REVERT_ON_EXIT, _revertOnExit.Checked);
         Settings.Set(Program.SHOW_EMPTY_WINDOW_SETTING, _showEmptyTitles.Checked);

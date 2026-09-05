@@ -36,6 +36,9 @@
     <String name="SettingsOptionsShiftBlacklist">SHIFT+CLICK items in the tray list to add to the title blacklist</String>
     <String name="SettingsOptionsRevertOnExit">Revert status to before {0} altered them on exit</String>
     <String name="SettingsOptionsShowTrayList">Show list of open windows in the tray menu</String>
+    <String name="SettingsOptionsShowMenuLeftClick">Show menu with left click</String>
+    <String name="SettingsOptionsShowMenuRightClick">Show menu with right click</String>
+    <String name="SettingsOptionsShowMenuError">At least one mouse button must be enabled to open the tray menu.</String>
     <String name="SettingsOptionsAlwaysAdmin">Always run as Administrator</String>
     <String name="SettingsLanguageTitle">Language</String>
     <String name="SettingsLanguageChangedInfo">Restart {0} for every translated label to be rebuilt with the selected language.</String>

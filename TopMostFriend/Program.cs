@@ -31,6 +31,8 @@ public static class Program
     public const string TITLE_BLACKLIST = "TitleBlacklist";
     public const string SHOW_HOTKEY_ICON = "ShowHotkeyIcon";
     public const string SHOW_WINDOW_LIST = "ShowWindowList";
+    public const string SHOW_MENU_LEFT_CLICK = "ShowMenuLeftClick";
+    public const string SHOW_MENU_RIGHT_CLICK = "ShowMenuRightClick";
     public const string LAST_VERSION = "LastVersion";
     public const string ALWAYS_RETRY_ELEVATED = "AlwaysRetryElevated";
     public const string REVERT_ON_EXIT = "RevertOnExit";
@@ -186,6 +188,8 @@ public static class Program
         Settings.SetDefault(SHOW_EMPTY_WINDOW_SETTING, false);
         Settings.SetDefault(PROCESS_SEPARATOR_SETTING, false);
         Settings.SetDefault(LIST_SELF_SETTING, false);
+        Settings.SetDefault(SHOW_MENU_LEFT_CLICK, true);
+        Settings.SetDefault(SHOW_MENU_RIGHT_CLICK, true);
     }
 
     private static void InitialiseLocale()
@@ -271,8 +275,10 @@ public static class Program
             Visible = true,
             Icon = _originalIcon,
             Text = TITLE,
-            ContextMenuStrip = _contextMenu,
+            ContextMenuStrip = null,
         };
+
+        ApplyTrayMenuMouseSettings();
 
         _trayIcon.MouseDown += TrayIcon_MouseDown;
 
@@ -284,9 +290,22 @@ public static class Program
         _systemEventsAttached = true;
     }
 
+    internal static void ApplyTrayMenuMouseSettings()
+    {
+        NotifyIcon? trayIcon = _trayIcon;
+        if (trayIcon == null)
+            return;
+
+        trayIcon.ContextMenuStrip =
+            Settings.Get(SHOW_MENU_RIGHT_CLICK, true)
+                ? _contextMenu
+                : null;
+    }
+
     private static void TrayIcon_MouseDown(object? sender, MouseEventArgs e)
     {
-        if ((e.Button & MouseButtons.Left) == 0)
+        if ((e.Button & MouseButtons.Left) == 0 ||
+            !Settings.Get(SHOW_MENU_LEFT_CLICK, true))
             return;
 
         // Build the window list before showing the menu so that its final size is
