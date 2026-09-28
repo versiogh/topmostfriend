@@ -175,11 +175,18 @@ public sealed class SettingsWindow : Form
         };
         blacklist.Click += (_, _) =>
         {
-            string[]? newList = BlacklistWindow.Display(Locale.String("SettingsOtherBlacklistWindowTitle"), Program.GetBlacklistedTitles());
-            if (newList != null)
+            (string[] Titles, string[] Processes)? result = BlacklistWindow.Display(
+                Locale.String("SettingsOtherBlacklistWindowTitle"),
+                Program.GetBlacklistedTitles(),
+                Program.GetBlacklistedProcesses());
+
+            if (result != null)
             {
-                Program.ApplyBlacklistedTitles(newList);
+                Program.ApplyBlacklistedTitles(result.Value.Titles);
                 Program.SaveBlacklistedTitles();
+
+                Program.ApplyBlacklistedProcesses(result.Value.Processes);
+                Program.SaveBlacklistedProcesses();
             }
         };
 

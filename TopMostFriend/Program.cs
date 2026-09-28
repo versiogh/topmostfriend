@@ -29,6 +29,7 @@ public static class Program
     public const string TOGGLE_BALLOON_SETTING = "ShowNotificationOnHotKey";
     public const string SHIFT_CLICK_BLACKLIST = "ShiftClickToBlacklist";
     public const string TITLE_BLACKLIST = "TitleBlacklist";
+    public const string PROCESS_BLACKLIST = "ProcessBlacklist";
     public const string SHOW_HOTKEY_ICON = "ShowHotkeyIcon";
     public const string SHOW_WINDOW_LIST = "ShowWindowList";
     public const string SHOW_MENU_LEFT_CLICK = "ShowMenuLeftClick";
@@ -50,6 +51,7 @@ public static class Program
     private static ToolStripItem[] _listActionItems = Array.Empty<ToolStripItem>();
     private static ToolStripItem[] _appActionItems = Array.Empty<ToolStripItem>();
     private static readonly List<string> TitleBlacklist = new();
+    private static readonly List<string> ProcessBlacklist = new();
     private static readonly Dictionary<WindowIdentity, bool> OriginalStates = new();
 
     private static Icon? _originalIcon;
@@ -120,6 +122,7 @@ public static class Program
         InitialiseDefaults();
         InitialiseLocale();
         InitialiseTitleBlacklist();
+        InitialiseProcessBlacklist();
         Settings.Set(LAST_VERSION, Application.ProductVersion);
 
         if (!AcquireSingleInstance())
@@ -226,6 +229,13 @@ public static class Program
         }
 
         ApplyBlacklistedTitles(Settings.Get(TITLE_BLACKLIST, Array.Empty<string>()) ?? Array.Empty<string>());
+    }
+
+    private static void InitialiseProcessBlacklist()
+    {
+        ApplyBlacklistedProcesses(
+            Settings.Get(PROCESS_BLACKLIST, Array.Empty<string>())
+            ?? Array.Empty<string>());
     }
 
     private static void InitialiseTrayApplication()
@@ -491,7 +501,7 @@ public static class Program
                 string title = window.Title;
                 if (!showEmptyTitles && string.IsNullOrEmpty(title))
                     continue;
-                if (CheckBlacklistedTitles(title))
+                if (CheckBlacklistedWindow(window))
                     continue;
 
                 if (separateProcesses && lastProcessId.HasValue && lastProcessId.Value != window.ProcessId)
@@ -964,6 +974,58 @@ public static class Program
     {
         lock (TitleBlacklist)
             Settings.Set(TITLE_BLACKLIST, TitleBlacklist.ToArray());
+    }
+
+    public static void AddBlacklistedProcess(string processName)
+    {
+        lock (ProcessBlacklist)
+        {
+            if (!ProcessBlacklist.Contains(processName, StringComparer.OrdinalIgnoreCase))
+                ProcessBlacklist.Add(processName);
+        }
+    }
+
+    public static void RemoveBlacklistedProcess(string processName)
+    {
+        lock (ProcessBlacklist)
+            ProcessBlacklist.RemoveAll(
+                x => string.Equals(x, processName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static void ApplyBlacklistedProcesses(IEnumerable<string> processNames)
+    {
+        lock (ProcessBlacklist)
+        {
+            ProcessBlacklist.Clear();
+            ProcessBlacklist.AddRange(
+                processNames
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+    }
+
+    public static bool CheckBlacklistedProcess(string processName)
+    {
+        lock (ProcessBlacklist)
+            return ProcessBlacklist.Contains(processName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static string[] GetBlacklistedProcesses()
+    {
+        lock (ProcessBlacklist)
+            return ProcessBlacklist.ToArray();
+    }
+
+    public static void SaveBlacklistedProcesses()
+    {
+        lock (ProcessBlacklist)
+            Settings.Set(PROCESS_BLACKLIST, ProcessBlacklist.ToArray());
+    }
+
+    public static bool CheckBlacklistedWindow(WindowInfo window)
+    {
+        return CheckBlacklistedTitles(window.Title)
+            || CheckBlacklistedProcess(window.ProcessName);
     }
 
     public static void RequestRestart()

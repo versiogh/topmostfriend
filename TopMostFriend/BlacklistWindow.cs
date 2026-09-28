@@ -8,57 +8,105 @@ namespace TopMostFriend;
 
 public sealed class BlacklistWindow : Form
 {
-    private readonly List<string> _blacklist;
-    private readonly ListBox _list;
+    private readonly List<string> _titleBlacklist;
+    private readonly List<string> _processBlacklist;
+
+    private readonly TabControl _tabs;
+    private readonly ListBox _titleList;
+    private readonly ListBox _processList;
+
     private readonly Button _edit;
     private readonly Button _remove;
 
-    public static string[]? Display(string title, string[]? items)
+    public static (string[] Titles, string[] Processes)? Display(
+        string title,
+        string[]? titles,
+        string[]? processes)
     {
-        using BlacklistWindow window = new(title, items ?? Array.Empty<string>());
-        return window.ShowDialog() == DialogResult.OK ? window._blacklist.ToArray() : null;
+        using BlacklistWindow window = new(
+            title,
+            titles ?? Array.Empty<string>(),
+            processes ?? Array.Empty<string>());
+
+        return window.ShowDialog() == DialogResult.OK
+            ? (
+                window._titleBlacklist.ToArray(),
+                window._processBlacklist.ToArray())
+            : null;
     }
 
-    private BlacklistWindow(string title, IEnumerable<string> items)
+    private BlacklistWindow(
+        string title,
+        IEnumerable<string> titles,
+        IEnumerable<string> processes)
     {
-        _blacklist = items.Distinct(StringComparer.Ordinal).ToList();
+        _titleBlacklist = titles
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        _processBlacklist = processes
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         Text = title;
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(500, 270);
-        MinimumSize = new Size(430, 250);
+        ClientSize = new Size(500, 300);
+        MinimumSize = new Size(430, 280);
         MinimizeBox = false;
         MaximizeBox = false;
         TopMost = true;
         Icon = AppIcon.Window;
 
-        _list = new ListBox
+        _tabs = new TabControl
         {
             Location = new Point(8, 8),
-            Size = new Size(380, 220),
+            Size = new Size(482, 225),
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-            IntegralHeight = false,
         };
-        _list.SelectedIndexChanged += (_, _) => UpdateButtons();
-        _list.DoubleClick += (_, _) => EditSelected();
+
+        TabPage titleTab = new()
+        {
+            Text = Locale.String("BlacklistTitles"),
+        };
+
+        TabPage processTab = new()
+        {
+            Text = Locale.String("BlacklistProcesses"),
+        };
+
+        _titleList = CreateListBox();
+        _processList = CreateListBox();
+
+        titleTab.Controls.Add(_titleList);
+        processTab.Controls.Add(_processList);
+
+        _tabs.TabPages.Add(titleTab);
+        _tabs.TabPages.Add(processTab);
+        _tabs.SelectedIndexChanged += (_, _) => UpdateButtons();
+
+        _titleList.SelectedIndexChanged += (_, _) => UpdateButtons();
+        _processList.SelectedIndexChanged += (_, _) => UpdateButtons();
+
+        _titleList.DoubleClick += (_, _) => EditSelected();
+        _processList.DoubleClick += (_, _) => EditSelected();
 
         Button add = new()
         {
             Text = Locale.String("BlacklistAdd"),
-            Location = new Point(400, 8),
+            Location = new Point(400, 241),
             Size = new Size(90, 27),
-            Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
         };
         add.Click += (_, _) => AddNew();
 
         _edit = new Button
         {
             Text = Locale.String("BlacklistEdit"),
-            Location = new Point(400, 41),
+            Location = new Point(300, 241),
             Size = new Size(90, 27),
-            Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             Enabled = false,
         };
         _edit.Click += (_, _) => EditSelected();
@@ -66,9 +114,9 @@ public sealed class BlacklistWindow : Form
         _remove = new Button
         {
             Text = Locale.String("BlacklistRemove"),
-            Location = new Point(400, 74),
+            Location = new Point(200, 241),
             Size = new Size(90, 27),
-            Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             Enabled = false,
         };
         _remove.Click += (_, _) => RemoveSelected();
@@ -76,7 +124,7 @@ public sealed class BlacklistWindow : Form
         Button done = new()
         {
             Text = Locale.String("BlacklistDone"),
-            Location = new Point(400, 202),
+            Location = new Point(400, 274),
             Size = new Size(90, 27),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             DialogResult = DialogResult.OK,
@@ -85,7 +133,7 @@ public sealed class BlacklistWindow : Form
         Button cancel = new()
         {
             Text = Locale.String("BlacklistCancel"),
-            Location = new Point(400, 235),
+            Location = new Point(300, 274),
             Size = new Size(90, 27),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             DialogResult = DialogResult.Cancel,
@@ -93,58 +141,137 @@ public sealed class BlacklistWindow : Form
 
         AcceptButton = done;
         CancelButton = cancel;
-        Controls.AddRange(new Control[] { _list, add, _edit, _remove, done, cancel });
-        RefreshList();
+
+        Controls.AddRange(new Control[]
+        {
+            _tabs,
+            _remove,
+            _edit,
+            add,
+            cancel,
+            done,
+        });
+
+        RefreshList(_titleList, _titleBlacklist);
+        RefreshList(_processList, _processBlacklist);
+        UpdateButtons();
     }
+
+    private static ListBox CreateListBox()
+    {
+        return new ListBox
+        {
+            Location = new Point(4, 4),
+            Size = new Size(466, 185),
+            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+            IntegralHeight = false,
+        };
+    }
+
+    private ListBox CurrentList =>
+        _tabs.SelectedIndex == 0 ? _titleList : _processList;
+
+    private List<string> CurrentBlacklist =>
+        _tabs.SelectedIndex == 0 ? _titleBlacklist : _processBlacklist;
+
+    private bool IsProcessBlacklist =>
+        _tabs.SelectedIndex == 1;
 
     private void AddNew()
     {
-        string? value = PromptForText(Locale.String("BlacklistEditorAdding"), string.Empty);
-        if (value != null && !_blacklist.Contains(value, StringComparer.Ordinal))
-            _blacklist.Add(value);
-        RefreshList(value);
+        string? value = PromptForText(
+            IsProcessBlacklist
+                ? Locale.String("BlacklistEditorAddingProcess")
+                : Locale.String("BlacklistEditorAdding"),
+            string.Empty);
+
+        if (value == null)
+            return;
+
+        List<string> blacklist = CurrentBlacklist;
+        StringComparison comparison = IsProcessBlacklist
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        if (!blacklist.Any(x => string.Equals(x, value, comparison)))
+            blacklist.Add(value);
+
+        RefreshCurrentList(value);
     }
 
     private void EditSelected()
     {
-        if (_list.SelectedItem is not string original)
+        ListBox list = CurrentList;
+
+        if (list.SelectedItem is not string original)
             return;
 
-        string? value = PromptForText(Locale.String("BlacklistEditorEditing", original), original);
+        string? value = PromptForText(
+            IsProcessBlacklist
+                ? Locale.String("BlacklistEditorEditingProcess", original)
+                : Locale.String("BlacklistEditorEditing", original),
+            original);
+
         if (value == null)
             return;
 
-        _blacklist.Remove(original);
-        if (!_blacklist.Contains(value, StringComparer.Ordinal))
-            _blacklist.Add(value);
-        RefreshList(value);
+        List<string> blacklist = CurrentBlacklist;
+        StringComparison comparison = IsProcessBlacklist
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        blacklist.Remove(original);
+
+        if (!blacklist.Any(x => string.Equals(x, value, comparison)))
+            blacklist.Add(value);
+
+        RefreshCurrentList(value);
     }
 
     private void RemoveSelected()
     {
-        if (_list.SelectedItem is string value)
-            _blacklist.Remove(value);
-        RefreshList();
+        ListBox list = CurrentList;
+
+        if (list.SelectedItem is string value)
+            CurrentBlacklist.Remove(value);
+
+        RefreshCurrentList();
     }
 
-    private void RefreshList(string? select = null)
+    private void RefreshCurrentList(string? select = null)
     {
-        _list.BeginUpdate();
+        RefreshList(CurrentList, CurrentBlacklist, select);
+    }
+
+    private static void RefreshList(
+        ListBox list,
+        IEnumerable<string> values,
+        string? select = null)
+    {
+        list.BeginUpdate();
         try
         {
-            _list.Items.Clear();
-            _list.Items.AddRange(_blacklist.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).Cast<object>().ToArray());
+            list.Items.Clear();
+
+            list.Items.AddRange(
+                values
+                    .OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase)
+                    .Cast<object>()
+                    .ToArray());
+
             if (select != null)
-                _list.SelectedItem = select;
+                list.SelectedItem = select;
         }
         finally
         {
-            _list.EndUpdate();
+            list.EndUpdate();
         }
-        UpdateButtons();
     }
 
-    private void UpdateButtons() => _edit.Enabled = _remove.Enabled = _list.SelectedIndex >= 0;
+    private void UpdateButtons()
+    {
+        _edit.Enabled = _remove.Enabled = CurrentList.SelectedIndex >= 0;
+    }
 
     private static string? PromptForText(string title, string initial)
     {
@@ -160,14 +287,41 @@ public sealed class BlacklistWindow : Form
             Icon = AppIcon.Window,
         };
 
-        TextBox input = new() { Text = initial, Location = new Point(8, 10), Width = 504 };
-        Button save = new() { Text = Locale.String("BlacklistEditorSave"), Location = new Point(356, 45), Size = new Size(75, 27), DialogResult = DialogResult.OK };
-        Button cancel = new() { Text = Locale.String("BlacklistEditorCancel"), Location = new Point(437, 45), Size = new Size(75, 27), DialogResult = DialogResult.Cancel };
+        TextBox input = new()
+        {
+            Text = initial,
+            Location = new Point(8, 10),
+            Width = 504,
+        };
+
+        Button save = new()
+        {
+            Text = Locale.String("BlacklistEditorSave"),
+            Location = new Point(356, 45),
+            Size = new Size(75, 27),
+            DialogResult = DialogResult.OK,
+        };
+
+        Button cancel = new()
+        {
+            Text = Locale.String("BlacklistEditorCancel"),
+            Location = new Point(437, 45),
+            Size = new Size(75, 27),
+            DialogResult = DialogResult.Cancel,
+        };
+
         form.AcceptButton = save;
         form.CancelButton = cancel;
         form.Controls.AddRange(new Control[] { input, save, cancel });
-        form.Shown += (_, _) => { input.Focus(); input.SelectAll(); };
 
-        return form.ShowDialog() == DialogResult.OK ? input.Text : null;
+        form.Shown += (_, _) =>
+        {
+            input.Focus();
+            input.SelectAll();
+        };
+
+        return form.ShowDialog() == DialogResult.OK
+            ? input.Text
+            : null;
     }
 }

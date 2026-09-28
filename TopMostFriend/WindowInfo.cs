@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
@@ -10,6 +11,7 @@ public sealed class WindowInfo
     public IntPtr Handle { get; }
     public uint ProcessId { get; }
     public uint ThreadId { get; }
+    public string ProcessName { get; }
 
     public string Title => Win32.GetWindowTextString(Handle);
 
@@ -44,6 +46,7 @@ public sealed class WindowInfo
         Handle = handle;
         ThreadId = Win32.GetWindowThreadProcessId(handle, out uint processId);
         ProcessId = processId;
+        ProcessName = GetProcessName(processId);
     }
 
     public WindowInfo(IntPtr handle, uint processId, uint threadId)
@@ -51,6 +54,26 @@ public sealed class WindowInfo
         Handle = handle;
         ProcessId = processId;
         ThreadId = threadId;
+        ProcessName = GetProcessName(processId);
+    }
+
+    private static string GetProcessName(uint processId)
+    {
+        if (processId == 0)
+            return string.Empty;
+
+        try
+        {
+            using Process process = Process.GetProcessById((int)processId);
+            return process.ProcessName + ".exe";
+        }
+        catch (Exception ex) when (
+            ex is ArgumentException ||
+            ex is InvalidOperationException ||
+            ex is System.ComponentModel.Win32Exception)
+        {
+            return string.Empty;
+        }
     }
 
     public bool TrySetTopMost(bool value)
