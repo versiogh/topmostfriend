@@ -33,6 +33,7 @@
     <String name="SettingsOptionsTitle">Options</String>
     <String name="SettingsOptionsToggleNotify">Show notification when using toggle hot key</String>
     <String name="SettingsOptionsToggleNotifyIcon">Show icon of window affected by hot key</String>
+	<String name="SettingsOptionsHotkeySound">Play a sound when using the hotkey</String>
     <String name="SettingsOptionsElevatedRetry">Always retry changing always on top status as Administrator on first failure</String>
     <String name="SettingsOptionsShiftBlacklist">SHIFT+CLICK items in the tray list to add to the title blacklist</String>
     <String name="SettingsOptionsRevertOnExit">Revert status to before {0} altered them on exit</String>

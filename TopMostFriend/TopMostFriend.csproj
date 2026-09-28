@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -23,6 +23,16 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Languages\*.xml" />
+    <None Remove="Sounds\tmf_off.wav" />
+    <None Remove="Sounds\tmf_on.wav" />
     <EmbeddedResource Include="TopMostFriend.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Sounds\tmf_on.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Sounds\tmf_off.wav" />
   </ItemGroup>
 </Project>

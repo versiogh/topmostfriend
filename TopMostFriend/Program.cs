@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Media;
 
 namespace TopMostFriend;
 
@@ -34,6 +35,9 @@ public static class Program
     public const string SHOW_WINDOW_LIST = "ShowWindowList";
     public const string SHOW_MENU_LEFT_CLICK = "ShowMenuLeftClick";
     public const string SHOW_MENU_RIGHT_CLICK = "ShowMenuRightClick";
+    public const string HOTKEY_SOUND = "HotKeySound";
+    public const string HOTKEY_SOUND_ON = "TopMostFriend.Sounds.tmf_on.wav";
+    public const string HOTKEY_SOUND_OFF = "TopMostFriend.Sounds.tmf_off.wav";
     public const string LAST_VERSION = "LastVersion";
     public const string ALWAYS_RETRY_ELEVATED = "AlwaysRetryElevated";
     public const string REVERT_ON_EXIT = "RevertOnExit";
@@ -766,6 +770,34 @@ public static class Program
             OriginalStates[identity] = state;
     }
 
+    private static void PlayHotKeySound(bool enabled)
+    {
+        if (!Settings.Get(HOTKEY_SOUND, false))
+            return;
+
+        string resourceName = enabled
+            ? HOTKEY_SOUND_ON
+            : HOTKEY_SOUND_OFF;     
+
+        try
+        {
+            using Stream? stream = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream(resourceName);
+
+            if (stream == null)
+            {
+                AppLog.Write($"Hot-key sound resource not found: {resourceName}");
+                return;
+            }
+
+            using SoundPlayer player = new(stream);
+            player.Play();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"Failed to play hot-key sound: {resourceName}", ex);
+        }
+    }
     public static async void ToggleForegroundWindow()
     {
         try
@@ -777,6 +809,8 @@ public static class Program
             ToggleOutcome outcome = await ToggleWindowAsync(window, activateWhenPinned: false);
             if (!outcome.Succeeded)
                 return;
+
+            PlayHotKeySound(outcome.NewState);
 
             if (Settings.Get(TOGGLE_BALLOON_SETTING, false) && _trayIcon != null)
             {

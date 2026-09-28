@@ -22,6 +22,7 @@ public sealed class SettingsWindow : Form
     private readonly CheckBox _toggleNotification;
     private readonly CheckBox _shiftClickBlacklist;
     private readonly CheckBox _showHotkeyIcon;
+    private readonly CheckBox _playHotkeySound;
     private readonly CheckBox _showWindowList;
     private readonly CheckBox _showMenuLeftClick;
     private readonly CheckBox _showMenuRightClick;
@@ -53,7 +54,7 @@ public sealed class SettingsWindow : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(560, 544);
+        ClientSize = new Size(560, 568);
         MaximizeBox = false;
         MinimizeBox = false;
         TopMost = true;
@@ -102,28 +103,36 @@ public sealed class SettingsWindow : Form
         {
             Text = Locale.String("SettingsOptionsTitle"),
             Location = new Point(10, 118),
-            Size = new Size(540, 244),
+            Size = new Size(540, 268),
         };
 
         _toggleNotification = AddOption(options, Locale.String("SettingsOptionsToggleNotify"), 22, Settings.Get(Program.TOGGLE_BALLOON_SETTING, Program.ToggleBalloonDefault));
         _showHotkeyIcon = AddOption(options, Locale.String("SettingsOptionsToggleNotifyIcon"), 46, Settings.Get(Program.SHOW_HOTKEY_ICON, true));
-        _alwaysRetryAsAdmin = AddOption(options, Locale.String("SettingsOptionsElevatedRetry"), 70, Settings.Get(Program.ALWAYS_RETRY_ELEVATED, false));
-        _shiftClickBlacklist = AddOption(options, Locale.String("SettingsOptionsShiftBlacklist"), 94, Settings.Get(Program.SHIFT_CLICK_BLACKLIST, true));
-        _revertOnExit = AddOption(options, Locale.String("SettingsOptionsRevertOnExit"), 118, Settings.Get(Program.REVERT_ON_EXIT, false));
-        _showWindowList = AddOption(options, Locale.String("SettingsOptionsShowTrayList"), 142, Settings.Get(Program.SHOW_WINDOW_LIST, true));
-        _alwaysAdmin = AddOption(options, Locale.String("SettingsOptionsAlwaysAdmin"), 166, Settings.Get(Program.ALWAYS_ADMIN_SETTING, false));
-        _showEmptyTitles = AddOption(options, Locale.String("SettingsOptionsShowEmptyTitles"), 190, Settings.Get(Program.SHOW_EMPTY_WINDOW_SETTING, false));
+        _playHotkeySound = AddOption(options, Locale.String("SettingsOptionsHotkeySound"), 70, Settings.Get(Program.HOTKEY_SOUND, false));
+        _alwaysRetryAsAdmin = AddOption(options, Locale.String("SettingsOptionsElevatedRetry"), 94, Settings.Get(Program.ALWAYS_RETRY_ELEVATED, false));
+        _shiftClickBlacklist = AddOption(options, Locale.String("SettingsOptionsShiftBlacklist"), 118, Settings.Get(Program.SHIFT_CLICK_BLACKLIST, true));
+        _revertOnExit = AddOption(options, Locale.String("SettingsOptionsRevertOnExit"), 142, Settings.Get(Program.REVERT_ON_EXIT, false));
+        _showWindowList = AddOption(options, Locale.String("SettingsOptionsShowTrayList"), 166, Settings.Get(Program.SHOW_WINDOW_LIST, true));
+        _alwaysAdmin = AddOption(options, Locale.String("SettingsOptionsAlwaysAdmin"), 190, Settings.Get(Program.ALWAYS_ADMIN_SETTING, false));
+        _showEmptyTitles = AddOption(options, Locale.String("SettingsOptionsShowEmptyTitles"), 214, Settings.Get(Program.SHOW_EMPTY_WINDOW_SETTING, false));
+
         Label showMenuLabel = new()
         {
             Text = Locale.String("SettingsOptionsShowMenu"),
-            Location = new Point(12, 220),
+            Location = new Point(12, 244),
             AutoSize = true,
         };
+
+        Size showMenuLabelSize = TextRenderer.MeasureText(
+            showMenuLabel.Text,
+            showMenuLabel.Font);
+
+        int showMenuLeftClickX = showMenuLabel.Left + showMenuLabelSize.Width + 8;
 
         _showMenuLeftClick = new CheckBox
         {
             Text = Locale.String("SettingsOptionsShowMenuLeftClick"),
-            Location = new Point(118, 218),
+            Location = new Point(showMenuLeftClickX, 242),
             AutoSize = true,
             Checked = Settings.Get(Program.SHOW_MENU_LEFT_CLICK, true),
         };
@@ -131,7 +140,7 @@ public sealed class SettingsWindow : Form
         _showMenuRightClick = new CheckBox
         {
             Text = Locale.String("SettingsOptionsShowMenuRightClick"),
-            Location = new Point(220, 218),
+            Location = new Point(_showMenuLeftClick.Right + 12, 242),
             AutoSize = true,
             Checked = Settings.Get(Program.SHOW_MENU_RIGHT_CLICK, true),
         };
@@ -146,7 +155,7 @@ public sealed class SettingsWindow : Form
         GroupBox languageGroup = new()
         {
             Text = Locale.String("SettingsLanguageTitle"),
-            Location = new Point(10, 370),
+            Location = new Point(10, 394),
             Size = new Size(540, 62),
         };
         _language = new ComboBox
@@ -163,7 +172,7 @@ public sealed class SettingsWindow : Form
         GroupBox other = new()
         {
             Text = Locale.String("SettingsOtherTitle"),
-            Location = new Point(10, 440),
+            Location = new Point(10, 464),
             Size = new Size(540, 58),
         };
 
@@ -210,7 +219,7 @@ public sealed class SettingsWindow : Form
         Button ok = new()
         {
             Text = Locale.String("SettingsOk"),
-            Location = new Point(310, 508),
+            Location = new Point(310, 532),
             Size = new Size(75, 27),
         };
         ok.Click += (_, _) => { if (ApplySettings()) Close(); };
@@ -218,7 +227,7 @@ public sealed class SettingsWindow : Form
         Button cancel = new()
         {
             Text = Locale.String("SettingsCancel"),
-            Location = new Point(391, 508),
+            Location = new Point(391, 532),
             Size = new Size(75, 27),
         };
         cancel.Click += (_, _) => Close();
@@ -226,7 +235,7 @@ public sealed class SettingsWindow : Form
         Button apply = new()
         {
             Text = Locale.String("SettingsApply"),
-            Location = new Point(472, 508),
+            Location = new Point(472, 532),
             Size = new Size(75, 27),
         };
         apply.Click += (_, _) => ApplySettings();
@@ -360,6 +369,7 @@ public sealed class SettingsWindow : Form
         Settings.Set(Program.TOGGLE_BALLOON_SETTING, _toggleNotification.Checked);
         Settings.Set(Program.SHIFT_CLICK_BLACKLIST, _shiftClickBlacklist.Checked);
         Settings.Set(Program.SHOW_HOTKEY_ICON, _showHotkeyIcon.Checked);
+        Settings.Set(Program.HOTKEY_SOUND, _playHotkeySound.Checked);
         Settings.Set(Program.SHOW_WINDOW_LIST, _showWindowList.Checked);
         Settings.Set(Program.SHOW_MENU_LEFT_CLICK, _showMenuLeftClick.Checked);
         Settings.Set(Program.SHOW_MENU_RIGHT_CLICK, _showMenuRightClick.Checked);

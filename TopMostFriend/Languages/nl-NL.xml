@@ -33,6 +33,7 @@
     <String name="SettingsOptionsTitle">Opties</String>
     <String name="SettingsOptionsToggleNotify">Toon notificatie als de sneltoets gebruikt is</String>
     <String name="SettingsOptionsToggleNotifyIcon">Toon icoon van het beïnvloede venster</String>
+	<String name="SettingsOptionsHotkeySound">Een geluid afspelen bij het gebruik van de sneltoets</String>
     <String name="SettingsOptionsElevatedRetry">Probeer automatisch opnieuw als Administrator</String>
     <String name="SettingsOptionsShiftBlacklist">SHIFT+CLICK items om ze aan de titel-blacklist toe te voegen</String>
     <String name="SettingsOptionsRevertOnExit">Herstel gewijzigde statussen bij afsluiten</String>

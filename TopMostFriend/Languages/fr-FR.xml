@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Language>
+	<Info>
+		<Id>fr-FR</Id>
+		<NameNative>Français</NameNative>
+		<NameEnglish>French</NameEnglish>
+		<TargetVersion>2.1.0</TargetVersion>
+	</Info>
+	<Strings>
+		<String name="AlreadyRunning">Une instance de {0} est déjà en cours d'exécution.</String>
+		<String name="TrayActions">Actions…</String>
+		<String name="TrayRefresh">&amp;Actualiser</String>
+		<String name="TraySettings">&amp;Paramètres</String>
+		<String name="TrayAbout">&amp;À propos</String>
+		<String name="TrayQuit">&amp;Quitter</String>
+		<String name="NotifyOnTop">Fenêtre Toujours devant</String>
+		<String name="NotifyNoLonger">Toujours devant désactivé pour cette fenêtre</String>
+		<String name="NotifyNoTitle">La fenêtre n'a pas de titre.</String>
+		<String name="ErrUnableAlterStatus1">Impossible de modifier l'état « Toujours devant » de cette fenêtre.</String>
+		<String name="ErrUnableAlterStatus2">Voulez-vous réessayer en tant qu'administrateur ? Une boîte de dialogue de contrôle de compte d'utilisateur apparaîtra après avoir sélectionné Oui.</String>
+		<String name="ErrUnableAlterStatusProtected">{0} n'a toujours pas pu modifier l'état « toujours au premier plan » de la fenêtre. Celle-ci est peut-être protégée par Windows.</String>
+		<String name="AboutTitle">À propos de {0}</String>
+		<String name="AboutClose">Fermer</String>
+		<String name="AboutWebsite">Site web</String>
+		<String name="AboutDonate">Faire un don</String>
+		<String name="SettingsTitle">Paramètres de {0}</String>
+		<String name="SettingsApply">Appliquer</String>
+		<String name="SettingsCancel">Annuler</String>
+		<String name="SettingsOk">OK</String>
+		<String name="SettingsHotKeysTitle">Raccourcis clavier</String>
+		<String name="SettingsHotKeysReset">Réinitialiser</String>
+		<String name="SettingsHotKeysToggle">Activer ou désactiver le mode Toujours devant de la fenêtre active</String>
+		<String name="SettingsOptionsTitle">Options</String>
+		<String name="SettingsOptionsToggleNotify">Afficher une notification lors de l'utilisation du raccourci clavier</String>
+		<String name="SettingsOptionsToggleNotifyIcon">Afficher l'icône de la fenêtre concernée par le raccourci clavier</String>
+		<String name="SettingsOptionsHotkeySound">Jouer un son lors de l'utilisation du raccourci clavier</String>
+		<String name="SettingsOptionsElevatedRetry">Toujours réessayer en tant qu'administrateur après un premier échec</String>
+		<String name="SettingsOptionsShiftBlacklist">MAJ+CLIC sur un élément de la liste pour l'ajouter aux exclusions de titre</String>
+		<String name="SettingsOptionsRevertOnExit">Rétablir à la fermeture l'état antérieur aux modifications effectuées par {0}</String>
+		<String name="SettingsOptionsShowTrayList">Afficher la liste des fenêtres ouvertes dans le menu de la zone de notification</String>
+		<String name="SettingsOptionsShowMenu">Afficher le menu avec :</String>
+		<String name="SettingsOptionsShowMenuLeftClick">Clic gauche</String>
+		<String name="SettingsOptionsShowMenuRightClick">Clic droit</String>
+		<String name="SettingsOptionsShowMenuError">Au moins un bouton de la souris doit être activé pour ouvrir le menu de la zone de notification.</String>
+		<String name="SettingsOptionsAlwaysAdmin">Toujours exécuter en tant qu'administrateur</String>
+		<String name="SettingsLanguageTitle">Langue</String>
+		<String name="SettingsLanguageChangedInfo">Redémarrez {0} pour que tous les libellés traduits soient reconstruits dans la langue sélectionnée.</String>
+		<String name="SettingsOtherTitle">Autres</String>
+		<String name="SettingsOtherBlacklistButton">Gérer les exclusions...</String>
+		<String name="SettingsOtherBlacklistWindowTitle">Exclusions</String>
+		<String name="SettingsOtherStartupButton">Démarrer avec Windows...</String>
+		<String name="SettingsOtherStartupConfirm">{0} doit-il démarrer avec Windows ? Sélectionnez Oui pour l'activer ou Non pour le désactiver.</String>
+		<String name="SettingsOtherResetButton">Réinitialiser tous les paramètres...</String>
+		<String name="SettingsOtherResetConfirm">Cette opération réinitialisera tous les paramètres de {0} et redémarrera l'application. Êtes-vous absolument sûr ?</String>
+
+		<String name="BlacklistTitles">Titres</String>
+		<String name="BlacklistProcesses">Processus</String>
+		<String name="BlacklistAdd">Ajouter</String>
+		<String name="BlacklistEdit">Modifier</String>
+		<String name="BlacklistRemove">Supprimer</String>
+		<String name="BlacklistCancel">Annuler</String>
+		<String name="BlacklistDone">Terminer</String>
+		<String name="BlacklistEditorAdding">Ajout d'une nouvelle entrée...</String>
+		<String name="BlacklistEditorAddingProcess">Ajout d'un nouveau processus...</String>
+		<String name="BlacklistEditorEditing">Modification de {1}...</String>
+		<String name="BlacklistEditorEditingProcess">Modification de {1}...</String>
+		<String name="BlacklistEditorCancel">Annuler</String>
+		<String name="BlacklistEditorSave">Enregistrer</String>
+
+		<String name="FirstRunWelcomeTitle">Bienvenue dans {0} !</String>
+		<String name="FirstRunWelcomeIntro">{0} permet d'activer ou de désactiver le mode toujours au premier plan des fenêtres ouvertes. Vous pouvez configurer un raccourci clavier global, le comportement en cas d'échec avec les droits d'administrateur, les notifications et bien plus encore dans les paramètres.</String>
+		<String name="TrayWindowNoTitle">(fenêtre sans titre)</String>
+		<String name="ErrUnhandled">{0} a rencontré une erreur. Un journal a été enregistré dans {1}</String>
+		<String name="ErrFatal">{0} ne peut pas continuer. Détails : {2} Journal : {1}</String>
+		<String name="ErrHotKeyUnavailable">Ce raccourci clavier global est déjà utilisé ou Windows a refusé de l'enregistrer. Le raccourci précédent a été conservé lorsque cela était possible.</String>
+		<String name="SettingsOptionsShowEmptyTitles">Afficher les fenêtres sans titre dans la liste</String>
+		<String name="SettingsOtherStartupError">Le paramètre de démarrage de Windows n'a pas pu être modifié. Consultez le journal pour plus de détails.</String>
+		<String name="AboutDescription">{0} maintient les fenêtres au-dessus de toutes les autres fenêtres sous Windows 10 et Windows 11. Projet original par flashwave, publié sous licence 0BSD.</String>
+		<String name="FirstRunContinue">Continuer</String>
+	</Strings>
+</Language>
