@@ -46,7 +46,7 @@
     <String name="SettingsLanguageChangedInfo">Restart {0} for every translated label to be rebuilt with the selected language.</String>
     <String name="SettingsOtherTitle">Other</String>
     <String name="SettingsOtherBlacklistButton">Manage Blacklist...</String>
-    <String name="SettingsOtherBlacklistWindowTitle">Title Blacklist</String>
+    <String name="SettingsOtherBlacklistWindowTitle">Blacklist</String>
     <String name="SettingsOtherStartupButton">Start with Windows...</String>
     <String name="SettingsOtherStartupConfirm">Should {0} start with Windows? Selecting Yes enables it; selecting No disables it.</String>
     <String name="SettingsOtherResetButton">Reset All Settings...</String>
@@ -58,6 +58,10 @@
     <String name="BlacklistDone">Done</String>
     <String name="BlacklistEditorAdding">Adding new entry...</String>
     <String name="BlacklistEditorEditing">Editing {1}...</String>
+	<String name="BlacklistTitles">Titles</String>
+	<String name="BlacklistProcesses">Processes</String>
+	<String name="BlacklistEditorAddingProcess">Adding new process...</String>
+	<String name="BlacklistEditorEditingProcess">Editing {1}...</String>
     <String name="BlacklistEditorCancel">Cancel</String>
     <String name="BlacklistEditorSave">Save</String>
     <String name="FirstRunWelcomeTitle">Welcome to {0}!</String>
