@@ -29,6 +29,7 @@ public sealed class SettingsWindow : Form
     private readonly CheckBox _alwaysRetryAsAdmin;
     private readonly CheckBox _revertOnExit;
     private readonly CheckBox _showEmptyTitles;
+    private readonly CheckBox _groupTrayActions;
     private readonly ComboBox _language;
 
     public static void Display()
@@ -54,7 +55,7 @@ public sealed class SettingsWindow : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(560, 568);
+        ClientSize = new Size(560, 592);
         MaximizeBox = false;
         MinimizeBox = false;
         TopMost = true;
@@ -103,7 +104,7 @@ public sealed class SettingsWindow : Form
         {
             Text = Locale.String("SettingsOptionsTitle"),
             Location = new Point(10, 118),
-            Size = new Size(540, 268),
+            Size = new Size(540, 292),
         };
 
         _toggleNotification = AddOption(options, Locale.String("SettingsOptionsToggleNotify"), 22, Settings.Get(Program.TOGGLE_BALLOON_SETTING, Program.ToggleBalloonDefault));
@@ -115,11 +116,12 @@ public sealed class SettingsWindow : Form
         _showWindowList = AddOption(options, Locale.String("SettingsOptionsShowTrayList"), 166, Settings.Get(Program.SHOW_WINDOW_LIST, true));
         _alwaysAdmin = AddOption(options, Locale.String("SettingsOptionsAlwaysAdmin"), 190, Settings.Get(Program.ALWAYS_ADMIN_SETTING, false));
         _showEmptyTitles = AddOption(options, Locale.String("SettingsOptionsShowEmptyTitles"), 214, Settings.Get(Program.SHOW_EMPTY_WINDOW_SETTING, false));
+        _groupTrayActions = AddOption(options, Locale.String("SettingsOptionsGroupTrayActions"), 238, Settings.Get(Program.GROUP_TRAY_ACTIONS, true));
 
         Label showMenuLabel = new()
         {
             Text = Locale.String("SettingsOptionsShowMenu"),
-            Location = new Point(12, 244),
+            Location = new Point(12, 268),
             AutoSize = true,
         };
 
@@ -132,7 +134,7 @@ public sealed class SettingsWindow : Form
         _showMenuLeftClick = new CheckBox
         {
             Text = Locale.String("SettingsOptionsShowMenuLeftClick"),
-            Location = new Point(showMenuLeftClickX, 242),
+            Location = new Point(showMenuLeftClickX, 266),
             AutoSize = true,
             Checked = Settings.Get(Program.SHOW_MENU_LEFT_CLICK, true),
         };
@@ -140,7 +142,7 @@ public sealed class SettingsWindow : Form
         _showMenuRightClick = new CheckBox
         {
             Text = Locale.String("SettingsOptionsShowMenuRightClick"),
-            Location = new Point(_showMenuLeftClick.Right + 12, 242),
+            Location = new Point(_showMenuLeftClick.Right + 12, 266),
             AutoSize = true,
             Checked = Settings.Get(Program.SHOW_MENU_RIGHT_CLICK, true),
         };
@@ -155,7 +157,7 @@ public sealed class SettingsWindow : Form
         GroupBox languageGroup = new()
         {
             Text = Locale.String("SettingsLanguageTitle"),
-            Location = new Point(10, 394),
+            Location = new Point(10, 418),
             Size = new Size(540, 62),
         };
         _language = new ComboBox
@@ -172,7 +174,7 @@ public sealed class SettingsWindow : Form
         GroupBox other = new()
         {
             Text = Locale.String("SettingsOtherTitle"),
-            Location = new Point(10, 464),
+            Location = new Point(10, 488),
             Size = new Size(540, 58),
         };
 
@@ -219,7 +221,7 @@ public sealed class SettingsWindow : Form
         Button ok = new()
         {
             Text = Locale.String("SettingsOk"),
-            Location = new Point(310, 532),
+            Location = new Point(310, 556),
             Size = new Size(75, 27),
         };
         ok.Click += (_, _) => { if (ApplySettings()) Close(); };
@@ -227,7 +229,7 @@ public sealed class SettingsWindow : Form
         Button cancel = new()
         {
             Text = Locale.String("SettingsCancel"),
-            Location = new Point(391, 532),
+            Location = new Point(391, 556),
             Size = new Size(75, 27),
         };
         cancel.Click += (_, _) => Close();
@@ -235,7 +237,7 @@ public sealed class SettingsWindow : Form
         Button apply = new()
         {
             Text = Locale.String("SettingsApply"),
-            Location = new Point(472, 532),
+            Location = new Point(472, 556),
             Size = new Size(75, 27),
         };
         apply.Click += (_, _) => ApplySettings();
@@ -379,6 +381,8 @@ public sealed class SettingsWindow : Form
         Settings.Set(Program.ALWAYS_RETRY_ELEVATED, _alwaysRetryAsAdmin.Checked);
         Settings.Set(Program.REVERT_ON_EXIT, _revertOnExit.Checked);
         Settings.Set(Program.SHOW_EMPTY_WINDOW_SETTING, _showEmptyTitles.Checked);
+        Settings.Set(Program.GROUP_TRAY_ACTIONS, _groupTrayActions.Checked);
+        Program.ApplyTrayActionGrouping();
 
         if (_language.SelectedItem is LanguageInfo selected)
         {
