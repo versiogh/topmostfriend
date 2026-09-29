@@ -74,6 +74,7 @@
 		<String name="ErrFatal">{0} ne peut pas continuer. Détails : {2} Journal : {1}</String>
 		<String name="ErrHotKeyUnavailable">Ce raccourci clavier global est déjà utilisé ou Windows a refusé de l'enregistrer. Le raccourci précédent a été conservé lorsque cela était possible.</String>
 		<String name="SettingsOptionsShowEmptyTitles">Afficher les fenêtres sans titre dans la liste</String>
+		<String name="SettingsOptionsGroupTrayActions">Regrouper les actions dans le sous-menu « Actions… »</String>
 		<String name="SettingsOtherStartupError">Le paramètre de démarrage de Windows n'a pas pu être modifié. Consultez le journal pour plus de détails.</String>
 		<String name="AboutDescription">{0} maintient les fenêtres au-dessus de toutes les autres fenêtres sous Windows 10 et Windows 11. Projet original par flashwave, publié sous licence 0BSD.</String>
 		<String name="FirstRunContinue">Continuer</String>
