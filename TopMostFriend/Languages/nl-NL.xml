@@ -72,6 +72,7 @@
     <String name="ErrFatal">{0} kan niet verder. Details: {2} Logbestand: {1}</String>
     <String name="ErrHotKeyUnavailable">Die globale sneltoets is al in gebruik of Windows heeft de registratie geweigerd. De vorige sneltoets is waar mogelijk behouden.</String>
     <String name="SettingsOptionsShowEmptyTitles">Vensters zonder titel in de lijst tonen</String>
+		<String name="SettingsOptionsGroupTrayActions">Acties in het submenu “Acties…” tonen</String>
     <String name="SettingsOtherStartupError">De Windows-opstartinstelling kon niet worden gewijzigd. Bekijk het logbestand voor details.</String>
     <String name="AboutDescription">{0} houdt vensters boven alle andere vensters op Windows 10 en Windows 11. Oorspronkelijk project van flashwave, uitgebracht onder de 0BSD-licentie.</String>
     <String name="FirstRunContinue">Doorgaan</String>
