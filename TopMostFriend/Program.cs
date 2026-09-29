@@ -53,6 +53,10 @@ public static class Program
     private static ContextMenuStrip? _contextMenu;
     private static HotKeyWindow? _hotKeys;
     private static ToolStripMenuItem? _refreshButton;
+    private static ToolStripMenuItem? _settingsButton;
+    private static ToolStripMenuItem? _aboutButton;
+    private static ToolStripMenuItem? _quitButton;
+    private static ToolStripMenuItem? _actionsMenu;
     private static ToolStripItem[] _listActionItems = Array.Empty<ToolStripItem>();
     private static ToolStripItem[] _appActionItems = Array.Empty<ToolStripItem>();
     private static readonly List<string> TitleBlacklist = new();
@@ -261,25 +265,25 @@ public static class Program
                 _hotKeys.BeginInvoke(new Action(RefreshWindowList));
         };
 
-        ToolStripMenuItem settings = new(Locale.String("TraySettings"));
-        settings.Click += (_, _) => SettingsWindow.Display();
+        _settingsButton = new ToolStripMenuItem(Locale.String("TraySettings"));
+        _settingsButton.Click += (_, _) => SettingsWindow.Display();
 
-        ToolStripMenuItem about = new(Locale.String("TrayAbout"));
-        about.Click += (_, _) => AboutWindow.Display();
+        _aboutButton = new ToolStripMenuItem(Locale.String("TrayAbout"));
+        _aboutButton.Click += (_, _) => AboutWindow.Display();
 
-        ToolStripMenuItem quit = new(Locale.String("TrayQuit"));
-        quit.Click += (_, _) => Application.Exit();
+        _quitButton = new ToolStripMenuItem(Locale.String("TrayQuit"));
+        _quitButton.Click += (_, _) => Application.Exit();
 
-        ToolStripMenuItem actions = new(Locale.String("TrayActions"));
-        actions.DropDownItems.Add(_refreshButton);
-        actions.DropDownItems.Add(settings);
-        actions.DropDownItems.Add(about);
-        actions.DropDownItems.Add(quit);
+        _actionsMenu = new ToolStripMenuItem(Locale.String("TrayActions"));
+        _actionsMenu.DropDownItems.Add(_refreshButton);
+        _actionsMenu.DropDownItems.Add(_settingsButton);
+        _actionsMenu.DropDownItems.Add(_aboutButton);
+        _actionsMenu.DropDownItems.Add(_quitButton);
 
         _listActionItems = Array.Empty<ToolStripItem>();
         _appActionItems = Array.Empty<ToolStripItem>();
 
-        ConfigureActionMenu(actions, settings, about, quit);
+        ApplyTrayActionGrouping();
 
         _contextMenu.Items.AddRange(_appActionItems);
 
@@ -303,21 +307,45 @@ public static class Program
         _systemEventsAttached = true;
     }
 
-    private static void ConfigureActionMenu(
-        ToolStripMenuItem actions,
-        ToolStripMenuItem settings,
-        ToolStripMenuItem about,
-        ToolStripMenuItem quit)
+    internal static void ApplyTrayActionGrouping()
     {
-        ToolStripItem[] actionItems = Settings.Get(GROUP_TRAY_ACTIONS, true)
-            ? new ToolStripItem[] { actions }
-            : new ToolStripItem[] { _refreshButton!, settings, about, quit };
+        if (_contextMenu == null || _contextMenu.IsDisposed ||
+            _refreshButton == null || _settingsButton == null ||
+            _aboutButton == null || _quitButton == null ||
+            _actionsMenu == null)
+            return;
 
-        _listActionItems = new ToolStripItem[]
+        _actionsMenu.DropDownItems.Clear();
+
+        if (Settings.Get(GROUP_TRAY_ACTIONS, true))
         {
-            new ToolStripSeparator(),
-        };
-        _listActionItems = _listActionItems.Concat(actionItems).ToArray();
+            _actionsMenu.DropDownItems.AddRange(new ToolStripItem[]
+            {
+                _refreshButton,
+                _settingsButton,
+                _aboutButton,
+                _quitButton,
+            });
+
+            _listActionItems = new ToolStripItem[]
+            {
+                new ToolStripSeparator(),
+                _actionsMenu,
+            };
+        }
+        else
+        {
+            _listActionItems = new ToolStripItem[]
+            {
+                new ToolStripSeparator(),
+                _refreshButton,
+                _settingsButton,
+                _aboutButton,
+                _quitButton,
+            };
+        }
+
+        RefreshWindowList();
     }
 
     internal static void ApplyTrayMenuMouseSettings()
