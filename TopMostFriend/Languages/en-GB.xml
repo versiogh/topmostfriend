@@ -72,6 +72,7 @@
     <String name="ErrFatal">{0} could not continue. Details: {2} Log: {1}</String>
     <String name="ErrHotKeyUnavailable">That global hot key is already in use or Windows refused to register it. The previous hot key was kept when possible.</String>
     <String name="SettingsOptionsShowEmptyTitles">Show windows without a title in the tray list</String>
+    <String name="SettingsOptionsGroupTrayActions">Show tray actions in the “Actions…” submenu</String>
     <String name="SettingsOtherStartupError">The Windows startup setting could not be changed. See the log for details.</String>
     <String name="AboutDescription">{0} keeps windows above every other window on Windows 10 and Windows 11. Original project by flashwave, released under the 0BSD licence.</String>
     <String name="FirstRunContinue">Continue</String>
