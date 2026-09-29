@@ -35,6 +35,7 @@ public static class Program
     public const string SHOW_WINDOW_LIST = "ShowWindowList";
     public const string SHOW_MENU_LEFT_CLICK = "ShowMenuLeftClick";
     public const string SHOW_MENU_RIGHT_CLICK = "ShowMenuRightClick";
+    public const string GROUP_TRAY_ACTIONS = "GroupTrayActions";
     public const string HOTKEY_SOUND = "HotKeySound";
     public const string HOTKEY_SOUND_ON = "TopMostFriend.Sounds.tmf_on.wav";
     public const string HOTKEY_SOUND_OFF = "TopMostFriend.Sounds.tmf_off.wav";
@@ -197,6 +198,7 @@ public static class Program
         Settings.SetDefault(LIST_SELF_SETTING, false);
         Settings.SetDefault(SHOW_MENU_LEFT_CLICK, true);
         Settings.SetDefault(SHOW_MENU_RIGHT_CLICK, true);
+        Settings.SetDefault(GROUP_TRAY_ACTIONS, true);
     }
 
     private static void InitialiseLocale()
@@ -274,13 +276,10 @@ public static class Program
         actions.DropDownItems.Add(about);
         actions.DropDownItems.Add(quit);
 
-        _listActionItems = new ToolStripItem[]
-        {
-        new ToolStripSeparator(),
-        actions,
-        };
-
+        _listActionItems = Array.Empty<ToolStripItem>();
         _appActionItems = Array.Empty<ToolStripItem>();
+
+        ConfigureActionMenu(actions, settings, about, quit);
 
         _contextMenu.Items.AddRange(_appActionItems);
 
@@ -302,6 +301,23 @@ public static class Program
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
         _systemEventsAttached = true;
+    }
+
+    private static void ConfigureActionMenu(
+        ToolStripMenuItem actions,
+        ToolStripMenuItem settings,
+        ToolStripMenuItem about,
+        ToolStripMenuItem quit)
+    {
+        ToolStripItem[] actionItems = Settings.Get(GROUP_TRAY_ACTIONS, true)
+            ? new ToolStripItem[] { actions }
+            : new ToolStripItem[] { _refreshButton!, settings, about, quit };
+
+        _listActionItems = new ToolStripItem[]
+        {
+            new ToolStripSeparator(),
+        };
+        _listActionItems = _listActionItems.Concat(actionItems).ToArray();
     }
 
     internal static void ApplyTrayMenuMouseSettings()
